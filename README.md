@@ -1,4 +1,3 @@
-# Kitty-Jet-Pack-Beta
-Things will be broken
+# Kitty-Jet-Pack
 Web APP
-https://playfulpawsprod.github.io/Kitty-Jet-Pack-Beta/
+https://playfulpawsprod.github.io/Kitty-Jet-Pack/

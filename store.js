@@ -1,19 +1,19 @@
 // ~~~ store.js ~~~ //
-// Magic spells for the Plushie Store! Nya~! (Rainbow Trail ACTUALLY Enabled!)
+// Magic spells for the Plushie Store! Nya~! (Kitty Colors Enabled!)
 
 // --- Store Data ---
 const storeItems = [
     { id: 'kitty_bow_pink', name: 'Pink Bow', cost: 1, description: 'A cute bow for kitty!', type: 'kitty_accessory', implemented: true },
-    { id: 'jetpack_rainbow', name: 'Rainbow Trail FX', cost: 250, description: 'Leave a sparkly rainbow trail!', type: 'jetpack_fx', implemented: true }, // NOW IMPLEMENTED!
+    { id: 'jetpack_rainbow', name: 'Rainbow Trail FX', cost: 250, description: 'Leave a sparkly rainbow trail!', type: 'jetpack_fx', implemented: true },
+    { id: 'kitty_color_black', name: 'Shadow Kitty', cost: 250, description: 'A sleek, mysterious look!', type: 'kitty_color', implemented: true }, // NOW IMPLEMENTED! Cost updated.
+    { id: 'kitty_color_orange', name: 'Ginger Kitty', cost: 250, description: 'A classic marmalade friend!', type: 'kitty_color', implemented: true }, // NOW IMPLEMENTED! Cost updated.
 
     // WIP Items
-    { id: 'kitty_color_black', name: 'Shadow Kitty', cost: 100, description: 'A sleek, mysterious look!', type: 'kitty_color', implemented: false },
-    { id: 'kitty_color_orange', name: 'Ginger Kitty', cost: 100, description: 'A classic marmalade friend!', type: 'kitty_color', implemented: false },
     { id: 'plushie_magnet', name: 'Plushie Magnet', cost: 500, description: 'Attract nearby plushies!', type: 'power_up', implemented: false }
 ];
 
 let purchasedItems = {}; // { 'itemId': true/false }
-let equippedItems = { kitty_accessory: null, kitty_color: null, jetpack_fx: null };
+let equippedItems = { kitty_accessory: null, kitty_color: null, jetpack_fx: null }; // Added kitty_color type
 
 let storeButtonHeight = 60; let storeButtonSpacing = 75;
 let buyButtonWidth; let buyButtonHeight = 40;
@@ -35,4 +35,4 @@ function loadItems() { /* ... same ... */ console.log("Loading items..."); purch
 function isItemPurchased(itemId) { return purchasedItems[itemId] === true; }
 
 // --- Helper to check equipped status ---
-function getEquippedItem(itemType) { return equippedItems[itemType]; }
+function getEquippedItem(itemType) { return equippedItems[itemType]; } // Returns the ID or null
