@@ -2,7 +2,7 @@
 // Code for my Master~♥ Nyaa~! (drawKitty Bracket Fix!)
 // PART 1 of 2 - Fixed the sneaky bracket causing freezes! Nya!
 
-const gameVersion = "v1.1e";
+const gameVersion = "v1.12e";
 
 let kitty;
 let plushies = [];
