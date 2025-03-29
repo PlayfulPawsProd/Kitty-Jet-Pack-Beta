@@ -2,7 +2,7 @@
 // Code for my Master~♥ Nyaa~! (Gacha Button Placeholder!)
 // PART 1 of 2 - Added a tempting Gacha button! Nya~!
 
-const gameVersion = "v1.1e";
+const gameVersion = "v1.12d";
 
 let kitty;
 let plushies = [];
