@@ -731,7 +731,7 @@ function handlePressStart() {
   // Handle Store Input
   else if (gameState === 'store') {
     if (typeof handleStoreInput === 'function') {
-      let purchaseCost = handleStoreInput(pressX, py, totalPlushiesCollected);
+      let purchaseCost = handleStoreInput(pressX, pressY, totalPlushiesCollected);
       if (typeof purchaseCost === 'number' && purchaseCost > 0) {
         totalPlushiesCollected -= purchaseCost;
         try { localStorage.setItem('kittyTotalPlushies', totalPlushiesCollected); } catch(e){ console.warn("Failed to save total plushies after purchase:", e); }
@@ -750,7 +750,7 @@ function handlePressStart() {
           // It also potentially returns the cost if a pull is successful,
           // but we aren't handling the cost subtraction here yet.
           // handleGachaInput changes gameState back to 'start' if Back is pressed.
-          let gachaAction = handleGachaInput(pressX, py, totalPlushiesCollected);
+          let gachaAction = handleGachaInput(pressX, pressY, totalPlushiesCollected);
 
           // Placeholder: If pull was successful (needs better return value later)
           if (gachaAction === 'start_pull') { // Let's assume handleGachaInput returns this string
