@@ -1,5 +1,5 @@
 // ~~~ gacha.js ~~~ //
-// Kana's Kapsule Khaos Machine - Mika is now the purrfect size! Nya~!
+// Kana's Kapsule Khaos Machine - Big Mika in the bottom right! Nya~!
 
 // --- Gacha Settings ---
 const GACHA_COST = 0; // Still free! For now... >:3
@@ -90,7 +90,7 @@ function displayGacha(currentTotalPlushies) {
     drawGachaBackButton();
 
     // --- Draw Mika & Commentary ---
-    drawMikaCommentary(); // Uses the new size!
+    drawMikaCommentary(); // Mika is now big and bottom-right!
 
     textAlign(CENTER, CENTER); noStroke();
 }
@@ -164,21 +164,22 @@ function drawGachaBackButton() {
     noStroke();
 }
 
-// --- Mika Drawing and Commentary (UPDATED SIZE & POSITION) ---
+// --- Mika Drawing and Commentary (BIGGER, Bottom Right!) ---
 function drawMikaCommentary() {
-    // Use the gameplay kitty size multiplier! Nya!
-    let mikaSize = min(width, height) * 0.08; // <<--- USING GAMEPLAY SIZE!
+    // BIGGER Mika! Nya~!
+    let mikaSize = min(width, height) * 0.15; // <<--- BIGGER size (0.15)
 
-    // Adjust position: Keep X, recalculate Y based on NEW size and button height
-    let mikaX = width * 0.18; // Moved right previously
-    // Make sure Y position accounts for the *new* smaller size to avoid button
-    let mikaY = height - (mikaSize * 0.7) - (gachaBackButton.h * 0.6); // Position relative to bottom, above button area
+    // --- POSITION CHANGE ---
+    // Place Mika near the bottom RIGHT corner
+    let buffer = 20; // Buffer space from edges
+    let mikaX = width - (mikaSize / 2) - buffer; // X position near right edge
+    let mikaY = height - (mikaSize / 2) - buffer; // Y position near bottom edge
 
     // Use the drawing function from sketch.js!
     if (typeof drawStaticKitty === 'function') {
-         drawStaticKitty(mikaX, mikaY, mikaSize); // Pass the new smaller size!
+         drawStaticKitty(mikaX, mikaY, mikaSize); // Pass the bigger size!
     } else {
-        // Fallback placeholder if function isn't found
+        // Fallback placeholder
         fill(kittyColor); noStroke(); rectMode(CENTER);
         rect(mikaX, mikaY, mikaSize * 0.6, mikaSize * 0.6);
         rectMode(CORNER);
@@ -190,9 +191,11 @@ function drawMikaCommentary() {
         mikaCommentaryTimer--;
         let bubbleW = width * 0.6;
         let bubbleH = height * 0.1;
-        // Position bubble relative to the NEW Mika position/size
-        let bubbleX = mikaX + mikaSize * 0.5;
-        let bubbleY = mikaY - bubbleH * 0.8 - mikaSize * 0.2; // Adjust Y slightly higher based on new size
+
+        // --- BUBBLE POSITION CHANGE ---
+        // Position bubble to the LEFT of Mika now
+        let bubbleX = mikaX - bubbleW - (mikaSize / 2); // Bubble X starts left of Mika
+        let bubbleY = mikaY - bubbleH * 0.8 - mikaSize * 0.2; // Bubble Y above Mika
 
         // Constrain bubble position
         bubbleX = constrain(bubbleX, 5, width - bubbleW - 5);
@@ -201,10 +204,13 @@ function drawMikaCommentary() {
 
         fill(240, 240, 240, 220); stroke(50); strokeWeight(1);
         rect(bubbleX, bubbleY, bubbleW, bubbleH, 10);
-        triangle( // Adjust tail pointer based on new size/pos
-            bubbleX + bubbleW * 0.1, bubbleY + bubbleH,
-            bubbleX + bubbleW * 0.2, bubbleY + bubbleH,
-            mikaX + mikaSize * 0.1, mikaY - mikaSize * 0.3 // Should still point correctly
+
+        // --- BUBBLE TAIL CHANGE ---
+        // Tail pointing towards Mika (from the right side of the bubble)
+        triangle(
+            bubbleX + bubbleW - bubbleW * 0.05, bubbleY + bubbleH, // Right-bottom point of base
+            bubbleX + bubbleW - bubbleW * 0.15, bubbleY + bubbleH, // Left-bottom point of base
+            mikaX - mikaSize * 0.1, mikaY - mikaSize * 0.3 // Point towards top-left of Mika's head approx
         );
 
         fill(50); noStroke();
@@ -213,6 +219,7 @@ function drawMikaCommentary() {
         textAlign(CENTER, CENTER);
     }
 }
+
 
 // --- Animation Logic (UPDATED TIMINGS) ---
 
