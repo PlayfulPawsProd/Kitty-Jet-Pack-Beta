@@ -3,7 +3,7 @@
 // PART 1 of 2 - Rearranged Start Screen Buttons! Nya!
 
 // --- Version ---
-const gameVersion = "v1.13f"; // This MUST match the version you intend to run
+const gameVersion = "v1.13g"; // This MUST match the version you intend to run
 
 let kitty;
 let plushies = [];
