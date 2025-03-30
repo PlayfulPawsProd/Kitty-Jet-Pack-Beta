@@ -1,9 +1,9 @@
 // ~~~ gacha.js ~~~ //
-// Kana's Kapsule Khaos Machine - Now with shaky-sparky-poofy action! Nya~!
+// Kana's Kapsule Khaos Machine - Smoother, cuter, and slower! Nya~!
 
 // --- Gacha Settings ---
-const GACHA_COST = 0; // FREE PULLS FOR NOW! Don't get used to it, Master! Hmph!
-const PULL_ANIMATION_DURATION = 180; // Total frames for the animation (3 seconds at 60fps)
+const GACHA_COST = 0; // Still free! For now... >:3
+const PULL_ANIMATION_DURATION = 300; // Total frames for animation (5 seconds at 60fps) - SLOWER!
 
 // --- Gacha Screen UI Elements ---
 let gachaBackButton;
@@ -14,15 +14,15 @@ let machineBox;
 let isGachaAnimating = false;
 let gachaAnimationTimer = 0;
 let currentGachaStep = 'idle'; // idle, shaking, sparking, poofing, dropping, revealing
-let capsule = null; // { y: number, color: p5.Color }
+let capsule = null;
 let spentPlushieParticles = [];
 let sparkParticles = [];
-let smokeParticles = []; // More smoke during animation!
+let smokeParticles = [];
 
 // --- Mika Commentary ---
 let mikaCommentary = "";
 let mikaCommentaryTimer = 0;
-const MIKA_COMMENTARY_DURATION = 120; // How long text stays (2 seconds)
+const MIKA_COMMENTARY_DURATION = 240; // How long text stays (4 seconds) - SLOWER!
 
 // --- Particle Settings ---
 const MAX_SMOKE_PARTICLES = 15;
@@ -32,251 +32,178 @@ const MAX_PLUSHIE_PARTICLES = 10;
 // --- Calculate dynamic Gacha layout elements ---
 function setupGachaLayout(canvasW, canvasH) {
     console.log("Calculating Gacha layout...");
-    gachaBackButton = { x: 15, y: canvasH - 55, w: 100, h: 40 };
+    // Move back button slightly higher to avoid any potential future overlap
+    gachaBackButton = { x: 15, y: canvasH - 65, w: 100, h: 40 }; // Adjusted Y
 
     let machineWidth = canvasW * 0.6;
     let machineHeight = canvasH * 0.6;
-    machineBox = { x: canvasW / 2 - machineWidth / 2, y: canvasH * 0.18, w: machineWidth, h: machineHeight }; // Slightly higher Y
+    machineBox = { x: canvasW / 2 - machineWidth / 2, y: canvasH * 0.18, w: machineWidth, h: machineHeight };
 
     let pullButtonSize = machineWidth * 0.3;
-    gachaPullButton = { x: machineBox.x + machineBox.w / 2 - pullButtonSize / 2, y: machineBox.y + machineBox.h * 0.65, w: pullButtonSize, h: pullButtonSize * 0.7 }; // Adjusted Y slightly
+    gachaPullButton = { x: machineBox.x + machineBox.w / 2 - pullButtonSize / 2, y: machineBox.y + machineBox.h * 0.65, w: pullButtonSize, h: pullButtonSize * 0.7 };
 
     console.log("Gacha layout calculated!");
 }
 
-// --- Display Gacha Screen (Now includes animation drawing) ---
+// --- Display Gacha Screen ---
 function displayGacha(currentTotalPlushies) {
     if (!width || !height) return;
 
-    // Update animation state if running
     if (isGachaAnimating) {
         updateGachaAnimation();
     } else {
-        // Idle smoke puffs
         if (frameCount % 45 === 0 && smokeParticles.length < MAX_SMOKE_PARTICLES / 2) {
             spawnSmokeParticle(machineBox.x + machineBox.w * 0.85, machineBox.y + machineBox.h * 0.1);
         }
     }
-
-    // Update all active particles
     updateSmokeParticles();
     updateSparkParticles();
     updateSpentPlushieParticles();
 
-
     // --- Draw Background ---
-    fill(30, 30, 40, 230);
-    rectMode(CORNER);
-    rect(0, 0, width, height);
+    fill(30, 30, 40, 230); rectMode(CORNER); rect(0, 0, width, height);
 
-    // --- Draw Title ---
+    // --- Draw Title & Plushie Count ---
     fill(textColor); stroke(textStrokeColor); strokeWeight(3);
     textSize(min(width, height) * 0.07); textAlign(CENTER, TOP);
-    text("Kana's Kapsule Khaos!", width / 2, height * 0.04); // Adjusted Y slightly
-
-    // --- Draw Plushie Count ---
+    text("Kana's Kapsule Khaos!", width / 2, height * 0.04);
     textSize(min(width, height) * 0.04); strokeWeight(2);
-    text(`Your Plushies: ${currentTotalPlushies}`, width / 2, height * 0.11); // Adjusted Y slightly
+    text(`Your Plushies: ${currentTotalPlushies}`, width / 2, height * 0.11);
     noStroke();
 
     // --- Draw Kana's Rickety Machine ---
-    push(); // Apply shaking only to the machine parts
+    push();
     if (currentGachaStep === 'shaking' || currentGachaStep === 'sparking' || currentGachaStep === 'poofing') {
-        translate(random(-4, 4), random(-2, 2)); // Shaky shaky!
+        translate(random(-3, 3), random(-1.5, 1.5)); // Slightly reduced shake intensity
     }
-    drawMachineBase(); // Draw the static parts
-    pop(); // End machine shake
+    drawMachineBase();
+    pop();
 
-    // Draw dynamic animation effects on top (not shaking)
+    // Draw dynamic effects
     drawSmokeParticles();
     drawSparkParticles();
     drawSpentPlushieParticles();
     drawCapsule();
 
-    // --- Draw Pull Button (Grey out if animating) ---
+    // --- Draw Buttons ---
     drawPullButton(currentTotalPlushies);
-
-    // --- Draw Back Button ---
     drawGachaBackButton();
 
     // --- Draw Mika & Commentary ---
-    drawMikaCommentary();
+    drawMikaCommentary(); // Uses the new static kitty draw function!
 
-
-    // Reset alignments maybe
-    textAlign(CENTER, CENTER);
-    noStroke();
+    textAlign(CENTER, CENTER); noStroke();
 }
 
 
 // --- Sub-Drawing Functions ---
 
-function drawMachineBase() {
-     if (!machineBox) return;
-     rectMode(CORNER);
+function drawMachineBase() { /* ... (No changes needed here) ... */ if (!machineBox) return; rectMode(CORNER); fill(100, 100, 110); rect(machineBox.x, machineBox.y, machineBox.w, machineBox.h, 10); fill(80); rect(machineBox.x + machineBox.w * 0.8, machineBox.y, machineBox.w * 0.1, machineBox.h * 0.15); fill(90); triangle( machineBox.x + machineBox.w * 0.1, machineBox.y, machineBox.x + machineBox.w * 0.3, machineBox.y, machineBox.x + machineBox.w * 0.2, machineBox.y + machineBox.h * 0.15 ); fill(40); rect(machineBox.x + machineBox.w * 0.3, machineBox.y + machineBox.h * 0.85, machineBox.w * 0.4, machineBox.h * 0.1); fill(255, 220, 0); rect(machineBox.x + machineBox.w * 0.05, machineBox.y + machineBox.h * 0.75, machineBox.w * 0.2, machineBox.h * 0.1); fill(0); textSize(min(width, height) * 0.018); textAlign(CENTER, CENTER); text("!!DANGER!!", machineBox.x + machineBox.w * 0.15, machineBox.y + machineBox.h * 0.8); }
+function drawPullButton(currentTotalPlushies) { /* ... (No changes needed here) ... */ if (!gachaPullButton) return; let btnColor = color(200, 0, 0); let btnTextColor = color(255); let btnText = `Pull! (${GACHA_COST === 0 ? 'Free!' : GACHA_COST})`; if (isGachaAnimating) { btnColor = color(100); btnTextColor = color(150); btnText = "Working..."; } else if (GACHA_COST > 0 && currentTotalPlushies < GACHA_COST) { btnColor = color(150, 0, 0); btnTextColor = color(200); } rectMode(CORNER); fill(btnColor); stroke(50); strokeWeight(1); rect(gachaPullButton.x, gachaPullButton.y, gachaPullButton.w, gachaPullButton.h, 5); fill(btnTextColor); noStroke(); textSize(min(width, height) * 0.03); textAlign(CENTER, CENTER); text(btnText, gachaPullButton.x + gachaPullButton.w / 2, gachaPullButton.y + gachaPullButton.h / 2); }
+function drawGachaBackButton() { /* ... (No changes needed here) ... */ if (!gachaBackButton) return; fill(backButtonColor); rectMode(CORNER); noStroke(); rect(gachaBackButton.x, gachaBackButton.y, gachaBackButton.w, gachaBackButton.h, 5); fill(textColor); textSize(min(width, height) * 0.04); textAlign(CENTER, CENTER); stroke(textStrokeColor); strokeWeight(1.5); text("Back", gachaBackButton.x + gachaBackButton.w / 2, gachaBackButton.y + gachaBackButton.h / 2); noStroke(); }
 
-     // Main Body (Placeholder - TODO: Add details like panels, bolts)
-     fill(100, 100, 110);
-     rect(machineBox.x, machineBox.y, machineBox.w, machineBox.h, 10);
-
-     // Smoke Pipe (Placeholder)
-     fill(80);
-     rect(machineBox.x + machineBox.w * 0.8, machineBox.y, machineBox.w * 0.1, machineBox.h * 0.15);
-
-     // Input Hopper (Placeholder)
-     fill(90);
-     triangle(
-         machineBox.x + machineBox.w * 0.1, machineBox.y,
-         machineBox.x + machineBox.w * 0.3, machineBox.y,
-         machineBox.x + machineBox.w * 0.2, machineBox.y + machineBox.h * 0.15
-     );
-
-     // Prize Chute
-     fill(40);
-     rect(machineBox.x + machineBox.w * 0.3, machineBox.y + machineBox.h * 0.85, machineBox.w * 0.4, machineBox.h * 0.1);
-
-     // Warning Sign (Placeholder)
-     fill(255, 220, 0);
-     rect(machineBox.x + machineBox.w * 0.05, machineBox.y + machineBox.h * 0.75, machineBox.w * 0.2, machineBox.h * 0.1);
-     fill(0); textSize(min(width, height) * 0.018); textAlign(CENTER, CENTER);
-     text("!!DANGER!!", machineBox.x + machineBox.w * 0.15, machineBox.y + machineBox.h * 0.8);
-}
-
-function drawPullButton(currentTotalPlushies) {
-    if (!gachaPullButton) return;
-    let btnColor = color(200, 0, 0);
-    let btnTextColor = color(255);
-    let btnText = `Pull! (${GACHA_COST === 0 ? 'Free!' : GACHA_COST})`; // Show Free! if cost is 0
-
-    if (isGachaAnimating) {
-        btnColor = color(100); // Grey out
-        btnTextColor = color(150);
-        btnText = "Working...";
-    } else if (GACHA_COST > 0 && currentTotalPlushies < GACHA_COST) {
-        btnColor = color(150, 0, 0); // Darker red if not enough
-        btnTextColor = color(200);
-    }
-
-    rectMode(CORNER);
-    fill(btnColor); stroke(50); strokeWeight(1);
-    rect(gachaPullButton.x, gachaPullButton.y, gachaPullButton.w, gachaPullButton.h, 5);
-
-    fill(btnTextColor); noStroke();
-    textSize(min(width, height) * 0.03); textAlign(CENTER, CENTER);
-    text(btnText, gachaPullButton.x + gachaPullButton.w / 2, gachaPullButton.y + gachaPullButton.h / 2);
-}
-
-function drawGachaBackButton() {
-    if (!gachaBackButton) return;
-    fill(backButtonColor); rectMode(CORNER); noStroke();
-    rect(gachaBackButton.x, gachaBackButton.y, gachaBackButton.w, gachaBackButton.h, 5);
-    fill(textColor); textSize(min(width, height) * 0.04); textAlign(CENTER, CENTER);
-    stroke(textStrokeColor); strokeWeight(1.5);
-    text("Back", gachaBackButton.x + gachaBackButton.w / 2, gachaBackButton.y + gachaBackButton.h / 2);
-    noStroke();
-}
-
+// --- Mika Drawing and Commentary (UPDATED) ---
 function drawMikaCommentary() {
     let mikaSize = min(width, height) * 0.15;
-    let mikaX = width * 0.1;
-    let mikaY = height - mikaSize * 0.8;
+    // Adjust position: More right, slightly higher to clearly avoid button
+    let mikaX = width * 0.18; // Moved right
+    let mikaY = height - mikaSize * 0.7 - gachaBackButton.h * 0.5; // Positioned relative to bottom, avoiding button space
 
-    // Draw simplified Mika (Placeholder: pink square with ears!)
-    fill(kittyColor); noStroke(); rectMode(CENTER);
-    rect(mikaX, mikaY, mikaSize * 0.6, mikaSize * 0.6); // Body
-    triangle( // Left ear
-        mikaX - mikaSize * 0.3, mikaY - mikaSize * 0.3,
-        mikaX - mikaSize * 0.3, mikaY - mikaSize * 0.5,
-        mikaX - mikaSize * 0.1, mikaY - mikaSize * 0.3
-    );
-    triangle( // Right ear
-        mikaX + mikaSize * 0.3, mikaY - mikaSize * 0.3,
-        mikaX + mikaSize * 0.3, mikaY - mikaSize * 0.5,
-        mikaX + mikaSize * 0.1, mikaY - mikaSize * 0.3
-    );
-    rectMode(CORNER); // Reset rectMode
+    // Use the new drawing function from sketch.js!
+    if (typeof drawStaticKitty === 'function') {
+         drawStaticKitty(mikaX, mikaY, mikaSize);
+         // console.log("Drawing static kitty!"); // Debug log
+    } else {
+        // Fallback placeholder if function isn't found (shouldn't happen)
+        fill(kittyColor); noStroke(); rectMode(CENTER);
+        rect(mikaX, mikaY, mikaSize * 0.6, mikaSize * 0.6);
+        rectMode(CORNER);
+        console.warn("drawStaticKitty function not found!");
+    }
+
 
     // Draw commentary bubble if active
     if (mikaCommentaryTimer > 0) {
         mikaCommentaryTimer--;
         let bubbleW = width * 0.6;
         let bubbleH = height * 0.1;
-        let bubbleX = mikaX + mikaSize * 0.5;
-        let bubbleY = mikaY - bubbleH * 0.8;
+        let bubbleX = mikaX + mikaSize * 0.4; // Position bubble relative to Mika
+        let bubbleY = mikaY - bubbleH * 0.8; // Position bubble above Mika
 
-        // Draw bubble shape (simple rect with tail)
+        // Constrain bubble position to stay on screen
+        bubbleX = constrain(bubbleX, 5, width - bubbleW - 5);
+        bubbleY = constrain(bubbleY, 5, height - bubbleH - 5);
+
+
         fill(240, 240, 240, 220); stroke(50); strokeWeight(1);
         rect(bubbleX, bubbleY, bubbleW, bubbleH, 10);
-        triangle( // Tail pointing to Mika
-            bubbleX + bubbleW * 0.05, bubbleY + bubbleH,
-            bubbleX + bubbleW * 0.15, bubbleY + bubbleH,
-            bubbleX + bubbleW * 0.1, bubbleY + bubbleH + 15
+        triangle( // Tail pointing towards Mika (adjust based on bubble position relative to Mika)
+            bubbleX + bubbleW * 0.1, bubbleY + bubbleH, // Left point of base
+            bubbleX + bubbleW * 0.2, bubbleY + bubbleH, // Right point of base
+            mikaX + mikaSize * 0.1, mikaY - mikaSize * 0.3 // Point towards top-right of Mika's head approx
         );
 
-        // Draw text
         fill(50); noStroke();
-        textSize(min(width, height) * 0.03); textAlign(LEFT, CENTER);
-        text(mikaCommentary, bubbleX + 15, bubbleY + bubbleH / 2, bubbleW - 30); // Wrap text
-        textAlign(CENTER, CENTER); // Reset alignment
+        textSize(min(width, height) * 0.03); textAlign(LEFT, TOP); // Use TOP align for text wrap
+        text(mikaCommentary, bubbleX + 15, bubbleY + 10, bubbleW - 30); // Add padding
+        textAlign(CENTER, CENTER);
     }
 }
 
-// --- Animation Logic ---
+// --- Animation Logic (UPDATED TIMINGS) ---
 
 function startGachaAnimation() {
     isGachaAnimating = true;
     gachaAnimationTimer = 0;
     currentGachaStep = 'shaking';
-    capsule = null; // Clear previous capsule
-    spentPlushieParticles = []; // Clear old particles
+    capsule = null;
+    spentPlushieParticles = [];
     sparkParticles = [];
-    // Don't clear smoke, let it linger
-    setMikaCommentary("Here we go! Don't break, stupid machine!");
+    setMikaCommentary("Alright, let's see what this junk spits out!");
     console.log("Gacha animation started: shaking");
 }
 
 function updateGachaAnimation() {
     gachaAnimationTimer++;
 
-    // --- Step Transitions ---
-    if (currentGachaStep === 'shaking' && gachaAnimationTimer > 40) { // ~0.6s
+    // --- Step Transitions (Slower!) ---
+    if (currentGachaStep === 'shaking' && gachaAnimationTimer > 60) { // ~1.0s shake
         currentGachaStep = 'sparking';
-        setMikaCommentary("Whoa! Sparky! Is that safe?!");
+        setMikaCommentary("Eek! Zappy! Kana probably used cheap wires...");
         console.log("Gacha step: sparking");
-    } else if (currentGachaStep === 'sparking' && gachaAnimationTimer > 90) { // ~1.5s total
+    } else if (currentGachaStep === 'sparking' && gachaAnimationTimer > 150) { // ~2.5s total (1.5s sparking)
         currentGachaStep = 'poofing';
-        setMikaCommentary("KANA! It's gonna blow! My plushies!!");
-        spawnSpentPlushieParticles(); // Spawn plushies flying out
+        setMikaCommentary("POOF! There go my plushies... Hope it's worth it!");
+        spawnSpentPlushieParticles();
         console.log("Gacha step: poofing");
-    } else if (currentGachaStep === 'poofing' && gachaAnimationTimer > 130) { // ~2.1s total
+    } else if (currentGachaStep === 'poofing' && gachaAnimationTimer > 240) { // ~4.0s total (1.5s poofing)
         currentGachaStep = 'dropping';
-        spawnCapsule(); // Create the capsule to drop
-        setMikaCommentary("Phew... wait, did something come out?");
+        spawnCapsule();
+        setMikaCommentary("Clunk! Was that... a prize? Or just more scrap?");
         console.log("Gacha step: dropping");
-    } else if (currentGachaStep === 'dropping' && capsule && capsule.y >= machineBox.y + machineBox.h * 0.9) { // When capsule hits bottom
+    } else if (currentGachaStep === 'dropping' && capsule && capsule.y >= machineBox.y + machineBox.h * 0.9) {
         currentGachaStep = 'revealing';
-        // In a real system, we'd determine the prize here based on the capsule
-        setMikaCommentary("A prize! For me?! ...I mean, US, Master! ♡");
+        setMikaCommentary("Ooh! Shiny! What is it, Master?! ♡");
         console.log("Gacha step: revealing");
-         // Keep revealing state for a bit
-    } else if (currentGachaStep === 'revealing' && gachaAnimationTimer > PULL_ANIMATION_DURATION + 30) { // Stay revealed for 0.5s extra
+    } else if (currentGachaStep === 'revealing' && gachaAnimationTimer > PULL_ANIMATION_DURATION + 60) { // Stay revealed for 1s extra
          currentGachaStep = 'idle';
          isGachaAnimating = false;
-         capsule = null; // Clear capsule for next pull
+         capsule = null;
          console.log("Gacha animation finished.");
+         setMikaCommentary("Ready for another go, Master? Hehe~"); // Reset commentary
     }
 
-    // --- Continuous Effects during steps ---
-    if (currentGachaStep === 'sparking' && frameCount % 3 === 0 && sparkParticles.length < MAX_SPARK_PARTICLES) {
+    // --- Continuous Effects ---
+    if (currentGachaStep === 'sparking' && frameCount % 4 === 0 && sparkParticles.length < MAX_SPARK_PARTICLES) { // Slightly slower spark spawn
         spawnSparkParticle();
     }
-    if ((currentGachaStep === 'shaking' || currentGachaStep === 'sparking' || currentGachaStep === 'poofing') && frameCount % 15 === 0 && smokeParticles.length < MAX_SMOKE_PARTICLES) {
-        spawnSmokeParticle(machineBox.x + machineBox.w * 0.85, machineBox.y + machineBox.h * 0.1); // More smoke!
+    if ((currentGachaStep === 'shaking' || currentGachaStep === 'sparking' || currentGachaStep === 'poofing') && frameCount % 20 === 0 && smokeParticles.length < MAX_SMOKE_PARTICLES) { // Slower smoke spawn
+        spawnSmokeParticle(machineBox.x + machineBox.w * 0.85, machineBox.y + machineBox.h * 0.1);
     }
 
-    // Update capsule position if dropping
+    // Update capsule position
     if (currentGachaStep === 'dropping' && capsule) {
-        capsule.y += 5; // Adjust drop speed as needed
+        capsule.y += 4; // Slightly slower drop speed
     }
 }
 
@@ -285,202 +212,23 @@ function setMikaCommentary(text) {
     mikaCommentaryTimer = MIKA_COMMENTARY_DURATION;
 }
 
-// --- Particle Spawning ---
+// --- Particle Spawning --- (No changes needed here)
+function spawnSmokeParticle(x, y) { smokeParticles.push({ x: x + random(-5, 5), y: y + random(-5, 5), vx: random(-0.2, 0.2), vy: random(-0.8, -0.3), size: random(15, 30), alpha: random(100, 180), life: 1.0 }); }
+function spawnSparkParticle() { let side = floor(random(4)); let x, y; if (side === 0) { x = machineBox.x + random(machineBox.w); y = machineBox.y; } else if (side === 1) { x = machineBox.x + random(machineBox.w); y = machineBox.y + machineBox.h; } else if (side === 2) { x = machineBox.x; y = machineBox.y + random(machineBox.h); } else { x = machineBox.x + machineBox.w; y = machineBox.y + random(machineBox.h); } sparkParticles.push({ x: x, y: y, vx: random(-2, 2), vy: random(-2, 2), len: random(5, 15), life: 1.0, alpha: 255 }); }
+function spawnSpentPlushieParticles() { let poofX = machineBox.x + machineBox.w / 2; let poofY = machineBox.y + machineBox.h * 0.3; for (let i = 0; i < MAX_PLUSHIE_PARTICLES; i++) { spentPlushieParticles.push({ x: poofX + random(-10, 10), y: poofY + random(-10, 10), vx: random(-3, 3), vy: random(-5, -1), size: random(8, 15), color: random(plushieColors), angle: random(TWO_PI), spin: random(-0.1, 0.1), life: 1.0, alpha: 255 }); } }
+function spawnCapsule() { let capsuleColors = [color(255,100,100), color(100,100,255), color(255,255,100), color(200)]; capsule = { x: machineBox.x + machineBox.w / 2, y: machineBox.y + machineBox.h * 0.8, size: machineBox.w * 0.15, color: random(capsuleColors) }; }
 
-function spawnSmokeParticle(x, y) {
-     smokeParticles.push({
-        x: x + random(-5, 5),
-        y: y + random(-5, 5),
-        vx: random(-0.2, 0.2),
-        vy: random(-0.8, -0.3), // Moves up
-        size: random(15, 30),
-        alpha: random(100, 180),
-        life: 1.0
-     });
-}
+// --- Particle Updating --- (No changes needed here)
+function updateSmokeParticles() { for (let i = smokeParticles.length - 1; i >= 0; i--) { let p = smokeParticles[i]; p.x += p.vx; p.y += p.vy; p.vy *= 0.98; p.life -= 0.015; p.size *= 0.99; if (p.life <= 0) { smokeParticles.splice(i, 1); } } }
+function updateSparkParticles() { for (let i = sparkParticles.length - 1; i >= 0; i--) { let p = sparkParticles[i]; p.x += p.vx; p.y += p.vy; p.vx *= 0.9; p.vy *= 0.9; p.life -= 0.08; p.alpha = p.life * 255; if (p.life <= 0) { sparkParticles.splice(i, 1); } } }
+function updateSpentPlushieParticles() { for (let i = spentPlushieParticles.length - 1; i >= 0; i--) { let p = spentPlushieParticles[i]; p.x += p.vx; p.y += p.vy; p.vy += 0.15; p.angle += p.spin; p.life -= 0.02; p.alpha = p.life * 255; if (p.life <= 0) { spentPlushieParticles.splice(i, 1); } } }
 
-function spawnSparkParticle() {
-    // Spawn near wires (imaginary for now, just around machine edges)
-    let side = floor(random(4));
-    let x, y;
-    if (side === 0) { // Top
-        x = machineBox.x + random(machineBox.w); y = machineBox.y;
-    } else if (side === 1) { // Bottom
-        x = machineBox.x + random(machineBox.w); y = machineBox.y + machineBox.h;
-    } else if (side === 2) { // Left
-        x = machineBox.x; y = machineBox.y + random(machineBox.h);
-    } else { // Right
-        x = machineBox.x + machineBox.w; y = machineBox.y + random(machineBox.h);
-    }
-
-    sparkParticles.push({
-        x: x, y: y,
-        vx: random(-2, 2), vy: random(-2, 2),
-        len: random(5, 15),
-        life: 1.0,
-        alpha: 255
-    });
-}
-
-function spawnSpentPlushieParticles() {
-    let poofX = machineBox.x + machineBox.w / 2;
-    let poofY = machineBox.y + machineBox.h * 0.3; // Poof from upper-mid machine
-    for (let i = 0; i < MAX_PLUSHIE_PARTICLES; i++) {
-        spentPlushieParticles.push({
-            x: poofX + random(-10, 10),
-            y: poofY + random(-10, 10),
-            vx: random(-3, 3), // Fly outwards
-            vy: random(-5, -1), // Fly upwards initially
-            size: random(8, 15),
-            color: random(plushieColors), // Use colors from sketch.js
-            angle: random(TWO_PI),
-            spin: random(-0.1, 0.1),
-            life: 1.0,
-            alpha: 255
-        });
-    }
-}
-
-function spawnCapsule() {
-     // Random color for now - later this could indicate rarity!
-    let capsuleColors = [color(255,100,100), color(100,100,255), color(255,255,100), color(200)];
-    capsule = {
-        x: machineBox.x + machineBox.w / 2, // Center of chute
-        y: machineBox.y + machineBox.h * 0.8, // Start just above chute opening
-        size: machineBox.w * 0.15,
-        color: random(capsuleColors)
-    };
-}
+// --- Particle Drawing --- (No changes needed here)
+function drawSmokeParticles() { noStroke(); for (let p of smokeParticles) { fill(150, p.alpha * p.life); ellipse(p.x, p.y, p.size); } }
+function drawSparkParticles() { strokeWeight(2); for (let p of sparkParticles) { stroke(255, 255, 0, p.alpha); line(p.x, p.y, p.x + p.vx * p.len * p.life, p.y + p.vy * p.len * p.life); } noStroke(); }
+function drawSpentPlushieParticles() { rectMode(CENTER); for (let p of spentPlushieParticles) { push(); translate(p.x, p.y); rotate(p.angle); fill(red(p.color), green(p.color), blue(p.color), p.alpha); rect(0, 0, p.size, p.size); pop(); } rectMode(CORNER); }
+function drawCapsule() { if (capsule && (currentGachaStep === 'dropping' || currentGachaStep === 'revealing')) { fill(capsule.color); stroke(50); strokeWeight(1); ellipse(capsule.x, capsule.y, capsule.size, capsule.size * 1.2); fill(255, 255, 255, 150); noStroke(); ellipse(capsule.x - capsule.size * 0.2, capsule.y - capsule.size * 0.2, capsule.size * 0.3, capsule.size * 0.3); noStroke(); } }
 
 
-// --- Particle Updating ---
-
-function updateSmokeParticles() {
-    for (let i = smokeParticles.length - 1; i >= 0; i--) {
-        let p = smokeParticles[i];
-        p.x += p.vx;
-        p.y += p.vy;
-        p.vy *= 0.98; // Slow down vertical rise
-        p.life -= 0.015; // Fade out
-        p.size *= 0.99; // Shrink slightly
-        if (p.life <= 0) {
-            smokeParticles.splice(i, 1);
-        }
-    }
-}
-
-function updateSparkParticles() {
-     for (let i = sparkParticles.length - 1; i >= 0; i--) {
-        let p = sparkParticles[i];
-        p.x += p.vx;
-        p.y += p.vy;
-        p.vx *= 0.9; // Slow down quickly
-        p.vy *= 0.9;
-        p.life -= 0.08; // Sparks are fast!
-        p.alpha = p.life * 255;
-        if (p.life <= 0) {
-            sparkParticles.splice(i, 1);
-        }
-    }
-}
-
-function updateSpentPlushieParticles() {
-     for (let i = spentPlushieParticles.length - 1; i >= 0; i--) {
-        let p = spentPlushieParticles[i];
-        p.x += p.vx;
-        p.y += p.vy;
-        p.vy += 0.15; // Add gravity
-        p.angle += p.spin;
-        p.life -= 0.02;
-        p.alpha = p.life * 255;
-        if (p.life <= 0) {
-            spentPlushieParticles.splice(i, 1);
-        }
-    }
-}
-
-// --- Particle Drawing ---
-
-function drawSmokeParticles() {
-    noStroke();
-    for (let p of smokeParticles) {
-        fill(150, p.alpha * p.life); // Grey smoke
-        ellipse(p.x, p.y, p.size);
-    }
-}
-
-function drawSparkParticles() {
-    strokeWeight(2);
-    for (let p of sparkParticles) {
-        stroke(255, 255, 0, p.alpha); // Yellow sparks
-        line(p.x, p.y, p.x + p.vx * p.len * p.life, p.y + p.vy * p.len * p.life); // Draw as lines
-    }
-    noStroke();
-}
-
-function drawSpentPlushieParticles() {
-    rectMode(CENTER); // Draw plushies centered and rotated
-    for (let p of spentPlushieParticles) {
-        push();
-        translate(p.x, p.y);
-        rotate(p.angle);
-        fill(red(p.color), green(p.color), blue(p.color), p.alpha); // Use plushie color
-        rect(0, 0, p.size, p.size);
-        pop();
-    }
-    rectMode(CORNER); // Reset rectMode
-}
-
-function drawCapsule() {
-    if (capsule && (currentGachaStep === 'dropping' || currentGachaStep === 'revealing')) {
-        fill(capsule.color);
-        stroke(50); strokeWeight(1);
-        // Draw simple ellipse capsule
-        ellipse(capsule.x, capsule.y, capsule.size, capsule.size * 1.2);
-        // Add a highlight?
-        fill(255, 255, 255, 150); noStroke();
-        ellipse(capsule.x - capsule.size * 0.2, capsule.y - capsule.size * 0.2, capsule.size * 0.3, capsule.size * 0.3);
-        noStroke();
-    }
-}
-
-
-// --- Handle Gacha Input (Updated for animation) ---
-function handleGachaInput(px, py, currentTotalPlushies) {
-    if (isGachaAnimating) {
-        // console.log("Gacha is animating, input ignored!");
-        return true; // Prevent other actions during animation
-    }
-
-    // Check Back Button
-    if (gachaBackButton && px >= gachaBackButton.x && px <= gachaBackButton.x + gachaBackButton.w &&
-        py >= gachaBackButton.y && py <= gachaBackButton.y + gachaBackButton.h) {
-        console.log("Gacha Back button pressed!");
-        gameState = 'start'; // Go back to start screen (defined in sketch.js)
-        // Clear commentary when leaving
-        mikaCommentary = "";
-        mikaCommentaryTimer = 0;
-        return 'back'; // Indicate back action
-    }
-
-    // Check Pull Button
-    if (gachaPullButton && px >= gachaPullButton.x && px <= gachaPullButton.x + gachaPullButton.w &&
-        py >= gachaPullButton.y && py <= gachaPullButton.y + gachaPullButton.h) {
-        console.log("Gacha Pull button pressed!");
-        // --- COST CHECK REMOVED FOR NOW ---
-        // if (currentTotalPlushies >= GACHA_COST) {
-            console.log("Enough plushies! Starting Gacha pull...");
-            startGachaAnimation();
-            // We need to tell sketch.js to subtract cost later when cost is not 0
-            // Maybe return GACHA_COST here?
-            return 'start_pull'; // Signal that pull started
-        // } else {
-        //     console.log("Not enough plushies! Need", GACHA_COST);
-        //     setMikaCommentary(`Hmph! Not enough plushies! You need ${GACHA_COST}!`);
-        //     shakeTime = 10; // Use the shake effect from sketch.js!
-        //     return 'pull_fail_cost'; // Indicate failure due to cost
-        // }
-    }
-
-    return false; // Click was not on a gacha button
-}
+// --- Handle Gacha Input --- (No changes needed here, logic is fine)
+function handleGachaInput(px, py, currentTotalPlushies) { /* ... same ... */ if (isGachaAnimating) { return true; } if (gachaBackButton && px >= gachaBackButton.x && px <= gachaBackButton.x + gachaBackButton.w && py >= gachaBackButton.y && py <= gachaBackButton.y + gachaBackButton.h) { console.log("Gacha Back button pressed!"); gameState = 'start'; mikaCommentary = ""; mikaCommentaryTimer = 0; return 'back'; } if (gachaPullButton && px >= gachaPullButton.x && px <= gachaPullButton.x + gachaPullButton.w && py >= gachaPullButton.y && py <= gachaPullButton.y + gachaPullButton.h) { console.log("Gacha Pull button pressed!"); console.log("Enough plushies! Starting Gacha pull..."); startGachaAnimation(); return 'start_pull'; } return false; }
