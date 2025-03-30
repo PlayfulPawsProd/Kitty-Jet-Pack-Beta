@@ -1,9 +1,9 @@
 // ~~~ Kitty's Cuddle Collection: JETPACK GALAXY ADVENTURE! ~~~ //
 // Code for my Master~♥ Nyaa~! (Rainbow Trail code moved to rainbow.js!)
-// PART 1 of 2 - Added Gacha Button Tease! Nya!
+// PART 1 of 2 - Integrated Basic Gacha Screen! Nya!
 
 // --- Version ---
-const gameVersion = "v1.12e"; // This MUST match the version you intend to run
+const gameVersion = "v1.12c"; // This MUST match the version you intend to run
 
 let kitty;
 let plushies = [];
@@ -12,7 +12,7 @@ let highScore = 0; let endlessHighScore = 0;
 let currentStreak = 0; let highestStreakInSession = 0;
 let totalPlushiesCollected = 0;
 let lives = 3;
-let gameState = 'intro';
+let gameState = 'intro'; // intro, start, playing, store, gacha, gameOverCutscene, gameOver
 let isDragging = false;
 let isEndlessMode = false;
 
@@ -42,7 +42,7 @@ let danceKittyBgColor, danceKittyColors = [];
 let endlessKittyBgColor, endlessKittyColors = [];
 let endlessModeButtonColor, endlessModeTextColorOn, endlessModeTextColorOff;
 let backButtonColor, storeButtonColor, storeButtonTextColor, updateButtonColor, updateButtonTextColor, updateAvailableColor;
-let gachaButtonColor, gachaButtonTextColor; // <-- ADDED THIS LINE! ☆
+let gachaButtonColor, gachaButtonTextColor;
 let textStrokeColor; let hudTextColorLight, hudTextColorDark;
 
 // --- Background Transition ---
@@ -67,7 +67,7 @@ let internalCanvasWidth = 600;
 
 // --- Button Bounds ---
 let endlessModeButton; let backButton; let storeButton; let updateButton;
-let gachaButton; // <-- ADDED THIS LINE, NYA!
+let gachaButton;
 
 // --- Update Check State ---
 let updateButtonState = 'idle'; let updateButtonText = "Check Updates"; let updateCheckTimeout;
@@ -92,14 +92,14 @@ function setup() {
     danceKittyBgColor = color(255, 235, 240); danceKittyColors = [ color(180, 255, 255, 40), color(255, 180, 255, 40), color(255, 255, 180, 40), color(180, 180, 255, 40) ];
     endlessKittyBgColor = color(230, 255, 230); endlessKittyColors = [ color(255, 180, 180, 50), color(255, 220, 180, 50), color(180, 255, 180, 50), color(220, 180, 255, 50) ];
     endlessModeButtonColor = color(100, 200, 100, 180); endlessModeTextColorOn = color(255, 255, 150); endlessModeTextColorOff = color(200);
-    backButtonColor = color(200, 100, 100, 180);
+    backButtonColor = color(200, 100, 100, 180); // Used by store and gacha now!
     storeButtonColor = color(150, 150, 220, 180);
     storeButtonTextColor = color(255);
     updateButtonColor = color(80, 80, 150, 180);
     updateButtonTextColor = color(200);
     updateAvailableColor = color(200, 150, 50, 200);
-    gachaButtonColor = color(180, 120, 220, 180); // <-- Mysterious Purple! Nya!
-    gachaButtonTextColor = color(230);          // <-- Light text for purple~
+    gachaButtonColor = color(180, 120, 220, 180);
+    gachaButtonTextColor = color(230);
     textStrokeColor = color(0, 0, 0, 150);
     hudTextColorLight = color(250, 250, 250);
     hudTextColorDark = color(40, 40, 40);
@@ -143,84 +143,310 @@ function defineButtonBounds() {
     // Position Store button relative to Endless button
     storeButton = { x: width / 2 - storeButtonW / 2, y: endlessModeButton.y + endlessButtonH * 1.8, w: storeButtonW, h: storeButtonH };
 
-    // --- ADD GACHA BUTTON POSITIONING --- START ---
+    // --- GACHA BUTTON POSITIONING ---
     let gachaButtonW = width * 0.35; // Same width as store for neatness
     let gachaButtonH = height * 0.06; // Same height
     let gachaButtonSpacing = gachaButtonH * 0.4; // Space between store and gacha
     gachaButton = { x: width / 2 - gachaButtonW / 2, y: storeButton.y + storeButtonH + gachaButtonSpacing, w: gachaButtonW, h: gachaButtonH };
-    // --- ADD GACHA BUTTON POSITIONING --- END --- Nyaa~!
 
-    let backButtonSize = min(width, height) * 0.1;
+    let backButtonSize = min(width, height) * 0.1; // Used for Endless Mode Gameplay only
     backButton = { x: width - backButtonSize - 15, y: 15, w: backButtonSize, h: backButtonSize * 0.6 };
 
     let updateButtonW = width * 0.3;
     let updateButtonH = height * 0.04;
     updateButton = { x: width - updateButtonW - 10, y: height - updateButtonH - 10, w: updateButtonW, h: updateButtonH };
 
+    // --- Call Layout Setups for Store and Gacha ---
     if (typeof setupStoreLayout === 'function') {
       setupStoreLayout(width, height);
     } else {
       console.error("setupStoreLayout() function not found!");
     }
+    if (typeof setupGachaLayout === 'function') { // <-- ADDED CALL
+        setupGachaLayout(width, height);
+    } else {
+        console.error("setupGachaLayout() function not found!");
+    }
+    // --- END CALLS ---
+
   } else {
     console.warn("defineButtonBounds called too early.");
     endlessModeButton = undefined;
     storeButton = undefined;
-    gachaButton = undefined; // <-- Make sure to undefine it here too!
+    gachaButton = undefined;
     backButton = undefined;
     updateButton = undefined;
   }
 }
 
 // --- Music Control Function ---
-function manageMusic() { if (!userHasInteracted || !audioStarted || !bgMusic || !cutsceneMusic) return; let targetGameVol = 0; let targetCutsceneVol = 0; let loopGame = false; let playCutsceneOnce = false; let restartCutscene = false; if (gameState === 'playing') { targetGameVol = gameMusicVol; targetCutsceneVol = 0; loopGame = true; } else if (gameState === 'intro' || gameState === 'start' || gameState === 'gameOverCutscene' || gameState === 'gameOver' || gameState === 'store') { targetGameVol = 0; targetCutsceneVol = cutsceneMusicVol; if ((gameState === 'intro' || gameState === 'gameOverCutscene') && !cutsceneMusic.isPlaying()) { playCutsceneOnce = true; } if ((gameState === 'start' || gameState === 'store') && (lastGameState === 'gameOver' || lastGameState === 'gameOverCutscene' || lastGameState === 'playing' || lastGameState === 'intro')) { restartCutscene = true; } } else { targetGameVol = 0; targetCutsceneVol = 0; } try { if (bgMusic.isPlaying() || bgMusic.isLooping()) { if (targetGameVol < bgMusic.getVolume()) { bgMusic.setVolume(targetGameVol, musicFadeTime); if (targetGameVol === 0) { setTimeout(() => { if (bgMusic && !bgMusic.isLooping()) bgMusic.stop(); }, musicFadeTime * 1000 + 50); } } else if (targetGameVol > bgMusic.getVolume()) { bgMusic.setVolume(targetGameVol, musicFadeTime); } if (loopGame && !bgMusic.isLooping() && targetGameVol > 0) { bgMusic.loop(); } } else if (loopGame && targetGameVol > 0) { console.log("Starting Game Music loop with fade-in"); bgMusic.setVolume(0); bgMusic.loop(); bgMusic.setVolume(targetGameVol, musicFadeTime); } if (cutsceneMusic.isPlaying()) { if (targetCutsceneVol < cutsceneMusic.getVolume()) { cutsceneMusic.setVolume(targetCutsceneVol, musicFadeTime); if (targetCutsceneVol === 0) { setTimeout(() => { if (cutsceneMusic && cutsceneMusic.isPlaying()) cutsceneMusic.stop(); }, musicFadeTime * 1000 + 50); } } else if (targetCutsceneVol > cutsceneMusic.getVolume()) { cutsceneMusic.setVolume(targetCutsceneVol, musicFadeTime); } if (restartCutscene) { console.log("Restarting Cutscene music for Start/Store screen loop"); cutsceneMusic.stop(); } } if ((playCutsceneOnce || restartCutscene) && targetCutsceneVol > 0 && !cutsceneMusic.isPlaying()) { console.log("Playing Cutscene music once with fade-in"); cutsceneMusic.setVolume(0); cutsceneMusic.play(); cutsceneMusic.setVolume(targetCutsceneVol, musicFadeTime); } else if ((gameState === 'gameOver' || gameState === 'start' || gameState === 'store') && targetCutsceneVol > 0 && !cutsceneMusic.isPlaying()){ console.log("Restarting Cutscene music for Game Over/Start/Store screen"); cutsceneMusic.setVolume(0); cutsceneMusic.play(); cutsceneMusic.setVolume(targetCutsceneVol, musicFadeTime); } } catch (e) { console.error("Error in manageMusic:", e); try { bgMusic.stop(); cutsceneMusic.stop(); } catch (e2) {} } }
+// Added 'gacha' state to play cutscene/menu music
+function manageMusic() {
+    if (!userHasInteracted || !audioStarted || !bgMusic || !cutsceneMusic) return;
+
+    let targetGameVol = 0;
+    let targetCutsceneVol = 0;
+    let loopGame = false;
+    let playCutsceneOnce = false;
+    let restartCutscene = false;
+
+    // Determine target volumes and loop states based on gameState
+    if (gameState === 'playing') {
+        targetGameVol = gameMusicVol;
+        targetCutsceneVol = 0;
+        loopGame = true;
+    } else if (gameState === 'intro' || gameState === 'start' || gameState === 'gameOverCutscene' || gameState === 'gameOver' || gameState === 'store' || gameState === 'gacha') { // <-- Added 'gacha'
+        targetGameVol = 0;
+        targetCutsceneVol = cutsceneMusicVol;
+        if ((gameState === 'intro' || gameState === 'gameOverCutscene') && !cutsceneMusic.isPlaying()) {
+            playCutsceneOnce = true; // Play intro/cutscene once if not already playing
+        }
+        // Restart cutscene music if coming from a different screen (like playing or game over) to ensure it loops nicely on menus
+        if ((gameState === 'start' || gameState === 'store' || gameState === 'gacha') && (lastGameState === 'gameOver' || lastGameState === 'gameOverCutscene' || lastGameState === 'playing' || lastGameState === 'intro')) {
+            restartCutscene = true;
+        }
+    } else {
+        // Default: no music for unknown states
+        targetGameVol = 0;
+        targetCutsceneVol = 0;
+    }
+
+    try {
+        // Manage Game Music (Background Loop)
+        if (bgMusic.isPlaying() || bgMusic.isLooping()) {
+            // Fade out if target volume is lower
+            if (targetGameVol < bgMusic.getVolume()) {
+                bgMusic.setVolume(targetGameVol, musicFadeTime);
+                // Schedule stop after fade out if volume is zero
+                if (targetGameVol === 0) {
+                    setTimeout(() => { if (bgMusic && !bgMusic.isLooping()) bgMusic.stop(); }, musicFadeTime * 1000 + 50); // Add buffer
+                }
+            }
+            // Fade in if target volume is higher
+            else if (targetGameVol > bgMusic.getVolume()) {
+                bgMusic.setVolume(targetGameVol, musicFadeTime);
+            }
+            // Ensure loop is active if needed
+            if (loopGame && !bgMusic.isLooping() && targetGameVol > 0) {
+                bgMusic.loop(); // Should already be playing if volume > 0, just ensure loop flag
+            }
+        }
+        // Start game music if needed
+        else if (loopGame && targetGameVol > 0) {
+            console.log("Starting Game Music loop with fade-in");
+            bgMusic.setVolume(0);
+            bgMusic.loop();
+            bgMusic.setVolume(targetGameVol, musicFadeTime);
+        }
+
+        // Manage Cutscene/Menu Music
+        if (cutsceneMusic.isPlaying()) {
+            // Fade out if target volume is lower
+            if (targetCutsceneVol < cutsceneMusic.getVolume()) {
+                cutsceneMusic.setVolume(targetCutsceneVol, musicFadeTime);
+                // Schedule stop after fade out if volume is zero
+                if (targetCutsceneVol === 0) {
+                    setTimeout(() => { if (cutsceneMusic && cutsceneMusic.isPlaying()) cutsceneMusic.stop(); }, musicFadeTime * 1000 + 50); // Add buffer
+                }
+            }
+            // Fade in if target volume is higher
+            else if (targetCutsceneVol > cutsceneMusic.getVolume()) {
+                cutsceneMusic.setVolume(targetCutsceneVol, musicFadeTime);
+            }
+            // Stop and restart if needed for menu looping
+            if (restartCutscene) {
+                 console.log("Restarting Cutscene music for Start/Store/Gacha screen loop");
+                 cutsceneMusic.stop(); // Stop immediately before restart below
+            }
+        }
+
+        // Start cutscene music if needed (play once or restart for loop)
+        if ((playCutsceneOnce || restartCutscene) && targetCutsceneVol > 0 && !cutsceneMusic.isPlaying()) {
+            console.log("Playing/Restarting Cutscene music with fade-in");
+            cutsceneMusic.setVolume(0);
+            cutsceneMusic.play(); // Play from beginning
+            cutsceneMusic.setVolume(targetCutsceneVol, musicFadeTime);
+        }
+        // Ensure cutscene music restarts if player returns to menu/gameover screen and it stopped
+        else if ((gameState === 'gameOver' || gameState === 'start' || gameState === 'store' || gameState === 'gacha') && targetCutsceneVol > 0 && !cutsceneMusic.isPlaying()){
+             console.log("Restarting Cutscene music for Game Over/Start/Store/Gacha screen");
+             cutsceneMusic.setVolume(0);
+             cutsceneMusic.play();
+             cutsceneMusic.setVolume(targetCutsceneVol, musicFadeTime);
+        }
+
+    } catch (e) {
+        console.error("Error in manageMusic:", e);
+        // Attempt to stop sounds if error occurs
+        try { bgMusic.stop(); cutsceneMusic.stop(); } catch (e2) {}
+    }
+}
 
 
 // initializeBackgroundElements (No changes)
 function initializeBackgroundElements() { if(!width || !height) return; stars = []; for (let i = 0; i < 300; i++) { stars.push({ x: random(width), y: random(height * 2), size: random(1, 3.5), speedFactor: random(0.05, 0.4) }); } buildings = []; let skyColorStage0 = skyColors[0]; for (let i = 0; i < 15; i++) { let far = random() < 0.5; let bldHeight = random(height * 0.1, height * (far ? 0.4 : 0.6)); let bldWidth = random(width * 0.04, width * 0.12); let finalColor = lerpColor(buildingColor, skyColorStage0, far ? 0.7 : 0.4); finalColor.setAlpha(far ? 160 : 200); buildings.push({ x: random(width * 1.2) - width * 0.1, h: bldHeight, w: bldWidth, y: random(height * 2), speedFactor: far ? 0.2 : 0.6, isRooftop: false, color: finalColor }); } clouds = []; for (let i = 0; i < 20; i++) { clouds.push({ x: random(width * 1.5) - width * 0.25, y: random(height * 2), size: random(width * 0.1, width * 0.4), speedFactor: random(0.3, 0.9), alpha: random(50, 150) }); } galaxyParticles = []; for (let i = 0; i < 400; i++) { galaxyParticles.push({ angle: random(TWO_PI), radius: random(height * 0.1, width * 0.8), speed: random(0.001, 0.005), size: random(1, 4), color: random() < 0.7 ? galaxyColor1 : galaxyColor2 }); } }
-// windowResized (No changes needed here)
-function windowResized() { let aspectRatio = windowHeight / windowWidth; let internalCanvasHeight = floor(internalCanvasWidth * aspectRatio); internalCanvasHeight = max(1, internalCanvasHeight); resizeCanvas(internalCanvasWidth, internalCanvasHeight); console.log(`Canvas resized to internal resolution: ${width}x${height}`); if (kitty) { kitty.baseY = height - 160; kitty.y = kitty.baseY; kitty.size = min(width, height) * 0.08; kitty.x = constrain(kitty.x, kitty.size / 2, width - kitty.size / 2); } else { console.warn("windowResized: kitty not ready yet."); } initializeBackgroundElements(); earthY = height * 1.5; defineButtonBounds(); }
 
-// draw (Calls rainbow trail update)
+// windowResized (Added setupGachaLayout call)
+function windowResized() {
+    let aspectRatio = windowHeight / windowWidth;
+    let internalCanvasHeight = floor(internalCanvasWidth * aspectRatio);
+    internalCanvasHeight = max(1, internalCanvasHeight);
+    resizeCanvas(internalCanvasWidth, internalCanvasHeight);
+    console.log(`Canvas resized to internal resolution: ${width}x${height}`);
+    if (kitty) {
+        kitty.baseY = height - 160;
+        kitty.y = kitty.baseY;
+        kitty.size = min(width, height) * 0.08;
+        kitty.x = constrain(kitty.x, kitty.size / 2, width - kitty.size / 2);
+    } else {
+        console.warn("windowResized: kitty not ready yet.");
+    }
+    initializeBackgroundElements();
+    earthY = height * 1.5;
+    defineButtonBounds(); // This now calls setupStoreLayout and setupGachaLayout internally
+}
+
+// draw (Added 'gacha' state)
 let lastGameState = '';
-function draw() { try { /* ... (stage, speed, bg calcs - same) ... */ let scrollSpeedForBackground = 0; previousVisualStage = visualStage; difficultyStage = floor(score / scorePerStage); if (isEndlessMode && (gameState === 'playing' || gameState === 'gameOverCutscene' || gameState === 'gameOver' || gameState === 'store')) { visualStage = maxVisualStageIndex; } else { visualStage = min(maxVisualStageIndex, difficultyStage); } let startingEndless = (gameState === 'playing' && lastGameState !== 'playing' && isEndlessMode); if (visualStage !== previousVisualStage && gameState === 'playing' && !startingEndless) { transitionStartTime = frameCount; console.log(`Transitioning to visual stage ${visualStage}`); if (visualStage < maxVisualStageIndex) { targetBgColor = skyColors[visualStage]; } else if (isEndlessMode) { targetBgColor = endlessKittyBgColor; } else { targetBgColor = danceKittyBgColor; } } else if (startingEndless) { console.log("Snapping BG to Endless Mode color"); currentBgColor = endlessKittyBgColor; targetBgColor = endlessKittyBgColor; transitionStartTime = -Infinity; } else if (gameState !== 'playing') { transitionStartTime = -Infinity; if (gameState === 'start' || gameState === 'intro' || gameState === 'store') { visualStage = 0; targetBgColor = skyColors[0]; currentBgColor = skyColors[0]; } else if (gameState === 'gameOverCutscene' || gameState === 'gameOver') { if (visualStage < maxVisualStageIndex) { currentBgColor = skyColors[visualStage]; } else if (isEndlessMode) { currentBgColor = endlessKittyBgColor; } else { currentBgColor = danceKittyBgColor; } targetBgColor = currentBgColor; } } else if (gameState === 'start' && previousVisualStage === 0) { currentBgColor = skyColors[0]; targetBgColor = skyColors[0]; } if (currentBgColor && targetBgColor) { currentBgColor = lerpColor(currentBgColor, targetBgColor, lerpSpeed); } else if(!currentBgColor && skyColors.length > 0){ currentBgColor = skyColors[0]; targetBgColor = skyColors[0]; } currentScrollSpeed = baseScrollSpeed + difficultyStage * scrollSpeedIncreasePerStage; currentPlushieFallSpeed = basePlushieFallSpeed + difficultyStage * plushieSpeedIncreasePerStage; currentPlushieSpawnInterval = max(minSpawnInterval, basePlushieSpawnInterval - difficultyStage * spawnRateDecreasePerStage); currentPlushieDrift = basePlushieDrift + difficultyStage * driftIncreasePerStage; scrollSpeedForBackground = (visualStage === maxVisualStageIndex || gameState !== 'playing') ? 0 : currentScrollSpeed; if(gameState === 'start' || gameState === 'gameOver' || gameState === 'gameOverCutscene' || gameState === 'store') scrollSpeedForBackground = baseScrollSpeed * 0.3; if(gameState === 'intro') scrollSpeedForBackground = 0; if (gameState === 'playing' && score > 0 && score % scorePerStage === 0 && score !== lastDifficultyIncreaseScore) { let lastMessage = currentEncouragingMessage; do { currentEncouragingMessage = random(encouragingMessages); } while (encouragingMessages.length > 1 && currentEncouragingMessage === lastMessage); lastDifficultyIncreaseScore = score; console.log("Difficulty Up! Message:", currentEncouragingMessage); } else if (score === 0) { lastDifficultyIncreaseScore = -1; }
+function draw() {
+  try {
+    // --- Difficulty / Stage Calculation ---
+    let scrollSpeedForBackground = 0;
+    previousVisualStage = visualStage;
+    difficultyStage = floor(score / scorePerStage);
 
-  // --- Draw Background ---
-  let transitionProgress = constrain(map(frameCount - transitionStartTime, 0, transitionDuration), 0, 1);
-  drawScrollingBackground(visualStage, scrollSpeedForBackground, currentBgColor, transitionProgress, isEndlessMode);
+    if (isEndlessMode && (gameState === 'playing' || gameState === 'gameOverCutscene' || gameState === 'gameOver' || gameState === 'store' || gameState === 'gacha')) {
+        visualStage = maxVisualStageIndex; // Stay on final stage background visually in endless/menus
+    } else {
+        visualStage = min(maxVisualStageIndex, difficultyStage);
+    }
 
-  // --- Draw Rainbow Trail --- (Check if function exists)
-  if (typeof updateAndDrawRainbowTrail === 'function') {
-    updateAndDrawRainbowTrail(scrollSpeedForBackground);
-  }
+    // --- Background Transition Logic ---
+    let startingEndless = (gameState === 'playing' && lastGameState !== 'playing' && isEndlessMode);
+    // Start transition if visual stage changes during gameplay (and not starting endless)
+    if (visualStage !== previousVisualStage && gameState === 'playing' && !startingEndless) {
+        transitionStartTime = frameCount;
+        console.log(`Transitioning to visual stage ${visualStage}`);
+        if (visualStage < maxVisualStageIndex) { targetBgColor = skyColors[visualStage]; }
+        else if (isEndlessMode) { targetBgColor = endlessKittyBgColor; }
+        else { targetBgColor = danceKittyBgColor; }
+    }
+    // Snap background immediately if starting endless mode
+    else if (startingEndless) {
+        console.log("Snapping BG to Endless Mode color");
+        currentBgColor = endlessKittyBgColor; targetBgColor = endlessKittyBgColor;
+        transitionStartTime = -Infinity; // Ensure no lerp happens
+    }
+    // Handle background colors for non-playing states (no transition)
+    else if (gameState !== 'playing') {
+        transitionStartTime = -Infinity; // Stop any ongoing transition
+        if (gameState === 'start' || gameState === 'intro' || gameState === 'store' || gameState === 'gacha') {
+            visualStage = 0; // Reset visual stage for menus
+            targetBgColor = skyColors[0]; currentBgColor = skyColors[0];
+        } else if (gameState === 'gameOverCutscene' || gameState === 'gameOver') {
+            // Keep the background from the stage where game ended
+            if (visualStage < maxVisualStageIndex) { currentBgColor = skyColors[visualStage]; }
+            else if (isEndlessMode) { currentBgColor = endlessKittyBgColor; }
+            else { currentBgColor = danceKittyBgColor; }
+            targetBgColor = currentBgColor; // No transition needed
+        }
+    }
+    // Ensure correct background on returning to start screen
+    else if (gameState === 'start' && previousVisualStage === 0) {
+        currentBgColor = skyColors[0]; targetBgColor = skyColors[0];
+    }
 
-  // --- Screen Shake ---
-  push(); if (shakeTime > 0) { translate(random(-6, 6), random(-6, 6)); shakeTime--; }
+    // Lerp background color if in transition
+    if (currentBgColor && targetBgColor) { currentBgColor = lerpColor(currentBgColor, targetBgColor, lerpSpeed); }
+    else if (!currentBgColor && skyColors.length > 0) { // Safety fallback
+        currentBgColor = skyColors[0]; targetBgColor = skyColors[0];
+    }
 
-  // --- Game State Display & Music ---
-  if (gameState === 'intro') { displayIntro(); } else if (gameState === 'start') { displayStartScreen(); } else if (gameState === 'playing') { runGame(); } else if (gameState === 'store') { if (typeof displayStore === 'function') { displayStore(totalPlushiesCollected); } else { console.error("displayStore not found!"); gameState='start';} } else if (gameState === 'gameOverCutscene') { displayGameOverCutscene(); } else if (gameState === 'gameOver') { displayGameOverScreen(); }
-  manageMusic(); lastGameState = gameState;
+    // --- Update Dynamic Difficulty Values ---
+    currentScrollSpeed = baseScrollSpeed + difficultyStage * scrollSpeedIncreasePerStage;
+    currentPlushieFallSpeed = basePlushieFallSpeed + difficultyStage * plushieSpeedIncreasePerStage;
+    currentPlushieSpawnInterval = max(minSpawnInterval, basePlushieSpawnInterval - difficultyStage * spawnRateDecreasePerStage);
+    currentPlushieDrift = basePlushieDrift + difficultyStage * driftIncreasePerStage;
 
-  // --- Draw Kitty --- (Spawn rainbow particles here!)
-   if (!(gameState === 'intro' && introStep < 4) && gameState !== 'store') {
-       if(kitty){
-           if (gameState !== 'gameOverCutscene') { kitty.bobOffset = sin(frameCount * 0.1) * (kitty.size * 0.05); kitty.y = kitty.baseY + kitty.bobOffset; }
-           else { kitty.y = kitty.baseY; }
+    // Set background scroll speed based on state
+    scrollSpeedForBackground = (visualStage === maxVisualStageIndex || gameState !== 'playing') ? 0 : currentScrollSpeed;
+    if (gameState === 'start' || gameState === 'gameOver' || gameState === 'gameOverCutscene' || gameState === 'store' || gameState === 'gacha') scrollSpeedForBackground = baseScrollSpeed * 0.3; // Slow scroll on menus
+    if (gameState === 'intro') scrollSpeedForBackground = 0; // No scroll during intro
 
-           drawKitty(gameState === 'gameOverCutscene');
+    // --- Update Encouraging Message ---
+    if (gameState === 'playing' && score > 0 && score % scorePerStage === 0 && score !== lastDifficultyIncreaseScore) {
+        let lastMessage = currentEncouragingMessage;
+        do { currentEncouragingMessage = random(encouragingMessages); } while (encouragingMessages.length > 1 && currentEncouragingMessage === lastMessage);
+        lastDifficultyIncreaseScore = score;
+        console.log("Difficulty Up! Message:", currentEncouragingMessage);
+    } else if (score === 0) {
+        lastDifficultyIncreaseScore = -1; // Reset for next game
+    }
 
-           // --- Spawn Rainbow Particles if Equipped --- (Check if function exists)
-           if (gameState === 'playing' && typeof getEquippedItem === 'function' && getEquippedItem('jetpack_fx') === 'jetpack_rainbow') {
-                if (frameCount % 2 === 0 && typeof spawnRainbowParticle === 'function') { // Check spawn function too
+    // --- Draw Background ---
+    let transitionProgress = constrain(map(frameCount - transitionStartTime, 0, transitionDuration), 0, 1);
+    drawScrollingBackground(visualStage, scrollSpeedForBackground, currentBgColor, transitionProgress, isEndlessMode);
+
+    // --- Draw Rainbow Trail ---
+    if (typeof updateAndDrawRainbowTrail === 'function') {
+        updateAndDrawRainbowTrail(scrollSpeedForBackground);
+    }
+
+    // --- Screen Shake ---
+    push(); // Apply shake transformation
+    if (shakeTime > 0) {
+        translate(random(-6, 6), random(-6, 6));
+        shakeTime--;
+    }
+
+    // --- Game State Display Logic & Music ---
+    if (gameState === 'intro') { displayIntro(); }
+    else if (gameState === 'start') { displayStartScreen(); }
+    else if (gameState === 'playing') { runGame(); }
+    else if (gameState === 'store') {
+        if (typeof displayStore === 'function') { displayStore(totalPlushiesCollected); }
+        else { console.error("displayStore not found!"); gameState='start'; }
+    }
+    else if (gameState === 'gacha') { // <-- ADDED GACHA STATE
+        if (typeof displayGacha === 'function') { displayGacha(totalPlushiesCollected); }
+        else { console.error("displayGacha not found!"); gameState='start'; }
+    }
+    else if (gameState === 'gameOverCutscene') { displayGameOverCutscene(); }
+    else if (gameState === 'gameOver') { displayGameOverScreen(); }
+
+    manageMusic(); // Manage music transitions based on current gameState
+    lastGameState = gameState; // Store state for next frame's music logic
+
+    // --- Draw Kitty --- (If applicable)
+    if (!(gameState === 'intro' && introStep < 4) && gameState !== 'store' && gameState !== 'gacha') { // Don't draw kitty in store or gacha
+        if (kitty) {
+            // Bobbing motion unless in cutscene
+            if (gameState !== 'gameOverCutscene') {
+                kitty.bobOffset = sin(frameCount * 0.1) * (kitty.size * 0.05);
+                kitty.y = kitty.baseY + kitty.bobOffset;
+            } else {
+                kitty.y = kitty.baseY; // Static during cutscene
+            }
+
+            drawKitty(gameState === 'gameOverCutscene');
+
+            // --- Spawn Rainbow Particles ---
+            if (gameState === 'playing' && typeof getEquippedItem === 'function' && getEquippedItem('jetpack_fx') === 'jetpack_rainbow') {
+                if (frameCount % 2 === 0 && typeof spawnRainbowParticle === 'function') {
                     spawnRainbowParticle();
                 }
-           }
-       }
-   }
+            }
+        }
+    }
 
-  pop(); } catch (e) { console.error("Error in draw():", e); noLoop(); } }
+    pop(); // End shake transformation
+  } catch (e) {
+    console.error("Error in draw():", e);
+    noLoop(); // Stop the loop on critical error
+  }
+}
 
-// Separate Element Drawing Functions (No changes)
+// Separate Element Drawing Functions (No changes needed here)
 function drawStage0Elements(scrollSpeed, alphaFactor) { buildings.forEach(b => { b.y += scrollSpeed * b.speedFactor; if (b.y > height) b.y -= height * 2; let c = b.color; fill(red(c), green(c), blue(c), alpha(c) * alphaFactor); rect(b.x, b.y, b.w, b.h); }); }
 function drawStage1Elements(scrollSpeed, alphaFactor) { buildings.forEach(b => { if (!b.isRooftop) { b.h = random(height*0.05, height*0.15); b.isRooftop = true; } b.y += scrollSpeed * (b.speedFactor + 0.2); if (b.y > height) b.y -= height * 2; let c = b.color; let baseAlpha = max(0, alpha(c) - 100); fill(red(c), green(c), blue(c), baseAlpha * alphaFactor); if (baseAlpha * alphaFactor > 1) rect(b.x, b.y, b.w, b.h); }); clouds.forEach(c => { c.y += scrollSpeed * c.speedFactor; if (c.y > height) c.y -= height * 2; fill(red(cloudColor), green(cloudColor), blue(cloudColor), c.alpha * alphaFactor); ellipse(c.x, c.y, c.size * 1.2, c.size * 0.8); ellipse(c.x + c.size*0.3, c.y + c.size*0.1, c.size, c.size*0.7); ellipse(c.x - c.size*0.3, c.y + c.size*0.1, c.size*0.9, c.size*0.6); }); }
 function drawStage2Elements(scrollSpeed, alphaFactor) { clouds.forEach(c => { c.y += scrollSpeed * c.speedFactor; if (c.y > height) c.y -= height * 2; let baseAlpha = max(0, c.alpha - 80); fill(red(cloudColor), green(cloudColor), blue(cloudColor), baseAlpha * alphaFactor); if (baseAlpha * alphaFactor > 1) { ellipse(c.x, c.y, c.size * 1.2, c.size * 0.8); ellipse(c.x + c.size*0.3, c.y + c.size*0.1, c.size, c.size*0.7); ellipse(c.x - c.size*0.3, c.y + c.size*0.1, c.size*0.9, c.size*0.6); } }); stars.slice(0, 100).forEach(s => { s.y += scrollSpeed * s.speedFactor; if (s.y > height) s.y -= height * 2; let flicker = map(sin(frameCount * 0.08 + s.x), -1, 1, 0.6, 1.2); fill(255, 255, 255, map(s.speedFactor, 0.1, 0.5, 50, 150) * alphaFactor); ellipse(s.x, s.y, s.size * flicker * 0.8, s.size * flicker * 0.8); }); fill(red(earthColor), green(earthColor), blue(earthColor), 255 * alphaFactor); arc(width/2, height*1.5, width*2, height*2, PI, TWO_PI); }
@@ -236,13 +462,13 @@ function runGame() { if(!kitty) return; kitty.x = constrain(kitty.x, kitty.size 
 
 // --- Screen Displays ---
 
-// Intro Display
+// Intro Display (No changes)
 function displayIntro() { let lineY = height * 0.2; let lineSpacing = min(width, height) * 0.05; let baseTextSize = lineSpacing * 0.7; let textBlockHeight = 0; let textBlockWidth = width * 0.85; let boxCenterY = height * 0.45; if (introStep <= 1) textBlockHeight = lineSpacing * 2.5; else if (introStep === 2) textBlockHeight = lineSpacing * 4; else if (introStep === 3) textBlockHeight = lineSpacing * 2.5; else if (introStep === 4) textBlockHeight = lineSpacing * 4; else if (introStep === 5) textBlockHeight = lineSpacing * 4.5; else if (introStep === 6) textBlockHeight = lineSpacing * 4.5; else if (introStep === 7) textBlockHeight = lineSpacing * 4; else if (introStep === 8) textBlockHeight = lineSpacing * 4.5; else if (introStep === 9) textBlockHeight = lineSpacing * 4; else if (introStep === 10) textBlockHeight = lineSpacing * 4.5; else if (introStep === 11) textBlockHeight = lineSpacing * 3.5; else textBlockHeight = lineSpacing * 3; fill(textBgColor); rectMode(CENTER); rect(width / 2, boxCenterY, textBlockWidth, textBlockHeight, 15); fill(textColor); textSize(baseTextSize); let currentLineY = boxCenterY - textBlockHeight / 2 + lineSpacing; if (introStep === 0) { text("Zzzzzz... purrrr...", width / 2, currentLineY); } else if (introStep === 1) { text("Zzzzzz...", width / 2, currentLineY); text("Suddenly, next door...", width / 2, currentLineY + lineSpacing); } else if (introStep === 2) { text("Suddenly...", width / 2, currentLineY); textSize(baseTextSize * 1.8); fill(boomColor); text("*** KABLOOOOOOM!!! ***", width / 2, currentLineY + lineSpacing * 1.5); textSize(baseTextSize); fill(textColor); } else if (introStep === 3) { text("NYA?! THAT BLAST AGAIN! Kana, you IDIOT!", width / 2, currentLineY); } else if (introStep === 4) { text("The whole house is shaking!", width / 2, currentLineY); text("The ceiling--! It's collapsing!", width / 2, currentLineY + lineSpacing); } else if (introStep === 5) { text("EEK! Gotta get out!", width / 2, currentLineY); text("But... wait...", width / 2, currentLineY + lineSpacing); text("What's that gleaming in the rubble?!", width / 2, currentLineY + lineSpacing * 2); } else if (introStep === 6) { text("What's that gleaming?!", width / 2, currentLineY); textSize(baseTextSize * 1.2); fill(sparkleColor); text("✨ A... JETPACK?! ✨", width / 2, currentLineY + lineSpacing * 1.2); textSize(baseTextSize); fill(textColor); text("And it fits purrfectly!", width / 2, currentLineY + lineSpacing * 2.4); } else if (introStep === 7) { text("Who cares where it came from!", width / 2, currentLineY); textSize(baseTextSize * 1.4); text("WHOOSH! Up we go!", width / 2, currentLineY + lineSpacing * 1.5); textSize(baseTextSize); } else if (introStep === 8) { text("WHOA! Flying!", width / 2, currentLineY); text("But... OH NO!", width / 2, currentLineY + lineSpacing); text("Explosion scattered plushies EVERYWHERE!", width / 2, currentLineY + lineSpacing * 2); } else if (introStep === 9) { text("They're floating all around!", width / 2, currentLineY); text("Gotta grab 'em while we fly!", width / 2, currentLineY + lineSpacing); } else if (introStep === 10) { text("Gotta grab 'em!", width / 2, currentLineY); textSize(baseTextSize * 1.2); text("They're MINE!", width / 2, currentLineY + lineSpacing); textSize(baseTextSize * 0.9); fill(kittyColor); text("...OURS, Master! OURS! ♥", width / 2, currentLineY + lineSpacing * 2); fill(textColor); textSize(baseTextSize); } else if (introStep === 11) { text("Use your finger to drag me left and right!", width / 2, currentLineY); text("Catch every single one!", width / 2, currentLineY + lineSpacing); } else if (introStep === 12) { text("Catch every single one!", width / 2, currentLineY); textSize(baseTextSize * 0.8); text("(Tap screen to start the ascent!)", width / 2, currentLineY + lineSpacing); } if (introStep < 12) { textSize(baseTextSize * 0.7); fill(200); text("[Tap to continue]", width / 2, height - lineSpacing * 0.7); } rectMode(CORNER); }
 
 // END OF PART 1
-// PART 2 of 2 - Added Gacha Button Tease! Nya!
+// PART 2 of 2 - Integrated Basic Gacha Screen! Nya!
 
-// Start Screen
+// Start Screen (Updated Gacha Button Text)
 function displayStartScreen() {
   fill(textColor);
   stroke(textStrokeColor);
@@ -321,22 +547,22 @@ function displayStartScreen() {
     instructionY += storeButton.h * 1.5; // Update Y for the *next* element's spacing
   }
 
-  // --- DRAW GACHA BUTTON - START --- Nya~!
+  // --- DRAW GACHA BUTTON --- Nya~! (Text Updated)
   if (gachaButton) {
     gachaButton.y = instructionY; // Position Gacha button below the Store button
     rectMode(CORNER);
-    fill(gachaButtonColor); // Our new purple color!
+    fill(gachaButtonColor);
     noStroke();
     rect(gachaButton.x, gachaButton.y, gachaButton.w, gachaButton.h, 5);
-    textSize(buttonTextSize * 0.9); // Same size as Store text
+    textSize(buttonTextSize * 0.9);
     textAlign(CENTER, CENTER);
     stroke(textStrokeColor);
     strokeWeight(1.5);
-    fill(gachaButtonTextColor); // Use the gacha text color
-    text("Gacha (Soon!)", gachaButton.x + gachaButton.w / 2, gachaButton.y + gachaButton.h / 2); // The teasing text!
-    instructionY += gachaButton.h * 1.5; // <<--- IMPORTANT! Update instructionY AFTER drawing gacha button
+    fill(gachaButtonTextColor);
+    text("Gacha", gachaButton.x + gachaButton.w / 2, gachaButton.y + gachaButton.h / 2); // <<--- Text Changed!
+    instructionY += gachaButton.h * 1.5; // Update instructionY AFTER drawing gacha button
   }
-  // --- DRAW GACHA BUTTON - END --- Hehe!
+  // --- DRAW GACHA BUTTON - END ---
 
   // --- Draw "Tap Here to FLY!" text ---
   fill(textColor);
@@ -407,7 +633,7 @@ function drawPlushie(p) { fill(p.color); stroke(50); strokeWeight(max(1, p.size 
 function checkCollision(player, obj) { if(!player || !obj) return false; let kittyLeft = player.x - player.size / 2, kittyRight = player.x + player.size / 2; let kittyTop = player.y - player.size / 2, kittyBottom = player.y + player.size / 2; let plushieLeft = obj.x - obj.size / 2, plushieRight = obj.x + obj.size / 2; let plushieTop = obj.y - obj.size / 2, plushieBottom = obj.y + obj.size / 2; let noOverlap = kittyLeft > plushieRight || kittyRight < plushieLeft || kittyTop > plushieBottom || kittyBottom < plushieTop; return !noOverlap; }
 function isPointInKitty(px, py) { if(!kitty) return false; let buffer = kitty.size * 0.5; let kittyLeft = kitty.x - kitty.size / 2 - buffer, kittyRight = kitty.x + kitty.size / 2 + buffer; let kittyTop = kitty.y - kitty.size / 2 - buffer, kittyBottom = kitty.y + kitty.size / 2 + buffer; return px >= kittyLeft && px <= kittyRight && py >= kittyTop && py <= kittyBottom; }
 
-// --- Input Handling ---
+// --- Input Handling --- (Updated Gacha Button Click & Added Gacha State)
 function handlePressStart() {
   if (!userHasInteracted) {
     userHasInteracted = true;
@@ -435,8 +661,8 @@ function handlePressStart() {
   // Define button checks only if buttons exist
   let endlessButtonDefined = (typeof endlessModeButton !== 'undefined' && endlessModeButton !== null);
   let storeButtonDefined = (typeof storeButton !== 'undefined' && storeButton !== null);
-  let gachaButtonDefined = (typeof gachaButton !== 'undefined' && gachaButton !== null); // Check Gacha Button
-  let backButtonDefined = (typeof backButton !== 'undefined' && backButton !== null);
+  let gachaButtonDefined = (typeof gachaButton !== 'undefined' && gachaButton !== null);
+  let backButtonDefined = (typeof backButton !== 'undefined' && backButton !== null); // Only used in gameplay endless
   let updateButtonDefined = (typeof updateButton !== 'undefined' && updateButton !== null);
 
   // Handle Back Button in Endless Mode Gameplay
@@ -485,17 +711,16 @@ function handlePressStart() {
       return; // Handled store button
     }
 
-    // --- CHECK GACHA BUTTON --- START --- Tehehe!
+    // --- CHECK GACHA BUTTON --- (Action Changed!)
     if (gachaButtonDefined && pressX >= gachaButton.x && pressX <= gachaButton.x + gachaButton.w &&
         pressY >= gachaButton.y && pressY <= gachaButton.y + gachaButton.h) {
-      console.log("Clicked the 'Soon!' Gacha button! Nyaa~!");
-      shakeTime = 10; // Wiggle wiggle!
-      return; // <-- IMPORTANT! Stop processing here so game doesn't start!
+      console.log("Gacha button pressed! Entering Gacha screen..."); // NEW Message
+      gameState = 'gacha'; // <-- CHANGE STATE! Nya!
+      return; // Stop processing here
     }
     // --- CHECK GACHA BUTTON --- END ---
 
     // --- If no button was pressed above this area, assume tap to start ---
-    // (Only reaches here if tap wasn't on Update, Endless, Store, or Gacha buttons)
     kitty.hasJetpack = true;
     resetGame();
     gameState = 'playing';
@@ -506,7 +731,7 @@ function handlePressStart() {
   // Handle Store Input
   else if (gameState === 'store') {
     if (typeof handleStoreInput === 'function') {
-      let purchaseCost = handleStoreInput(pressX, pressY, totalPlushiesCollected);
+      let purchaseCost = handleStoreInput(pressX, py, totalPlushiesCollected);
       if (typeof purchaseCost === 'number' && purchaseCost > 0) {
         totalPlushiesCollected -= purchaseCost;
         try { localStorage.setItem('kittyTotalPlushies', totalPlushiesCollected); } catch(e){ console.warn("Failed to save total plushies after purchase:", e); }
@@ -517,6 +742,31 @@ function handlePressStart() {
     }
     return; // Handled store input or navigation
   }
+
+  // --- HANDLE GACHA INPUT --- START ---
+  else if (gameState === 'gacha') {
+      if (typeof handleGachaInput === 'function') {
+          // handleGachaInput in gacha.js will check buttons
+          // It also potentially returns the cost if a pull is successful,
+          // but we aren't handling the cost subtraction here yet.
+          // handleGachaInput changes gameState back to 'start' if Back is pressed.
+          let gachaAction = handleGachaInput(pressX, py, totalPlushiesCollected);
+
+          // Placeholder: If pull was successful (needs better return value later)
+          if (gachaAction === 'start_pull') { // Let's assume handleGachaInput returns this string
+                console.log("Sketch received 'start_pull' signal");
+                // TODO: Deduct cost HERE in sketch.js
+                // totalPlushiesCollected -= GACHA_COST; // Need GACHA_COST from gacha.js or define here
+                // try { localStorage.setItem('kittyTotalPlushies', totalPlushiesCollected); } catch(e){ console.warn("Failed to save total plushies after gacha pull:", e); }
+          }
+
+      } else {
+          console.warn("handleGachaInput function not found! Switching back to start.");
+          gameState = 'start';
+      }
+      return; // Handled gacha input or navigation
+  }
+  // --- HANDLE GACHA INPUT --- END ---
 
   // Handle Intro Progression
   else if (gameState === 'intro') {
@@ -536,7 +786,7 @@ function handlePressStart() {
       if (cutsceneStep === 2) { shakeTime = 15; }
       else if (cutsceneStep === 3) { shakeTime = 15;}
       else { shakeTime = 0; }
-      cutsceneStep++;
+      cutscene++;
     } else {
       gameState = 'gameOver';
     }
@@ -555,17 +805,48 @@ function handlePressStart() {
   }
 }
 
-// --- Version Check Function ---
+// --- Version Check Function --- (No changes)
 function checkVersion() { if (updateButtonState === 'checking') return; console.log("Checking for updates..."); updateButtonState = 'checking'; updateButtonText = "Checking..."; clearTimeout(updateCheckTimeout); const versionUrl = 'version.json'; fetch(versionUrl + '?t=' + Date.now()).then(response => { if (!response.ok) { throw new Error(`HTTP error! status: ${response.status}`); } return response.json(); }).then(data => { if (data && data.version) { console.log(`Current Version: ${gameVersion}, Latest Version: ${data.version}`); if (data.version !== gameVersion) { console.log("Update Available!"); updateButtonState = 'available'; updateButtonText = "Update Found!"; } else { console.log("Game is up to date! Nya~!"); updateButtonState = 'uptodate'; updateButtonText = "Up to Date! ♡"; updateCheckTimeout = setTimeout(() => { updateButtonState = 'idle'; updateButtonText = "Check Updates"; }, 3000); } } else { throw new Error("Invalid version data received."); } }).catch(error => { console.error("Error checking version:", error); updateButtonState = 'error'; updateButtonText = "Check Failed :("; updateCheckTimeout = setTimeout(() => { updateButtonState = 'idle'; updateButtonText = "Check Updates"; }, 5000); }); }
 
-// Standard p5 mouse/touch listeners
+// Standard p5 mouse/touch listeners (No changes)
 function mousePressed() { handlePressStart(); if (mouseX > 0 && mouseX < width && mouseY > 0 && mouseY < height) { return false; } }
 function touchStarted() { handlePressStart(); if (touches.length > 0 && touches[0] && touches[0].x > 0 && touches[0].x < width && touches[0].y > 0 && touches[0].y < height) { return false; } }
 function mouseDragged() { if (isDragging && gameState === 'playing') { if(!kitty) return; kitty.x = mouseX; kitty.x = constrain(kitty.x, kitty.size / 2, width - kitty.size / 2); } if (isDragging) { return false; } }
 function touchMoved() { if (isDragging && gameState === 'playing') { if(!kitty) return; if (touches.length > 0 && touches[0]) { kitty.x = touches[0].x; kitty.x = constrain(kitty.x, kitty.size / 2, width - kitty.size / 2); } } if (isDragging) { return false; } }
 function mouseReleased() { if (isDragging) { isDragging = false; } }
 function touchEnded() { if (isDragging) { isDragging = false; } }
+
 // resetGame (No changes needed)
-function resetGame() { if (lastGameState === 'playing') { try { localStorage.setItem('kittyTotalPlushies', totalPlushiesCollected); console.log("Total plushies saved on reset:", totalPlushiesCollected); } catch(e){ console.warn("Failed to save total plushies:", e); } } score = 0; if (!isEndlessMode) lives = 3; plushies = []; difficultyStage = 0; visualStage = 0; previousVisualStage = 0; currentStreak = 0; highestStreakInSession = 0; if(kitty) kitty.x = width / 2; isDragging = false; frameCount = 0; shakeTime = 0; initializeBackgroundElements(); earthY = height * 1.5; lastDifficultyIncreaseScore = -1; currentEncouragingMessage = random(encouragingMessages); transitionStartTime = -Infinity; if(skyColors && skyColors.length > 0) { currentBgColor = skyColors[0]; targetBgColor = skyColors[0]; } cutsceneStep = 0; }
+function resetGame() {
+    // Save total plushies if resetting from playing state
+    if (lastGameState === 'playing') {
+        try {
+            localStorage.setItem('kittyTotalPlushies', totalPlushiesCollected);
+            console.log("Total plushies saved on reset:", totalPlushiesCollected);
+        } catch(e){ console.warn("Failed to save total plushies:", e); }
+    }
+    score = 0;
+    if (!isEndlessMode) lives = 3; // Only reset lives in normal mode
+    plushies = [];
+    difficultyStage = 0;
+    visualStage = 0;
+    previousVisualStage = 0;
+    currentStreak = 0;
+    highestStreakInSession = 0;
+    if(kitty) kitty.x = width / 2;
+    isDragging = false;
+    frameCount = 0; // Reset frameCount for consistent timing if needed
+    shakeTime = 0;
+    initializeBackgroundElements(); // Reset background elements
+    earthY = height * 1.5;
+    lastDifficultyIncreaseScore = -1;
+    currentEncouragingMessage = random(encouragingMessages);
+    transitionStartTime = -Infinity; // Reset transition
+    if(skyColors && skyColors.length > 0) { // Reset background color
+        currentBgColor = skyColors[0];
+        targetBgColor = skyColors[0];
+    }
+    cutsceneStep = 0; // Reset cutscene progress
+}
 
 // END OF PART 2
