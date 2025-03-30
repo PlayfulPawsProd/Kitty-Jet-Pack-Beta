@@ -3,7 +3,7 @@
 // PART 1 of 2 - Updated Gacha Input Handling! Nya!
 
 // --- Version ---
-const gameVersion = "v1.12c"; // This MUST match the version you intend to run
+const gameVersion = "v1.12j"; // This MUST match the version you intend to run
 
 let kitty;
 let plushies = [];
