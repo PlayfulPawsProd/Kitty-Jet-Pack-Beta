@@ -32,6 +32,7 @@ function setupWardrobeLayout(canvasW, canvasH) {
 
     let tabWidth = canvasW / 3.5; // Adjusted width slightly for potentially longer labels
     let tabSpacing = 10;
+    let tabHeight = 40;
     let totalTabWidth = (tabWidth * 3) + (tabSpacing * 2);
     let tabsStartX = canvasW/2 - totalTabWidth/2;
 
