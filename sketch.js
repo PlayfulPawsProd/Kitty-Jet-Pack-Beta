@@ -3,7 +3,7 @@
 // PART 1 of 2 - Added drawStaticKitty helper! Nya!
 
 // --- Version ---
-const gameVersion = "v1.12k"; // This MUST match the version you intend to run
+const gameVersion = "v1.13"; // This MUST match the version you intend to run
 
 let kitty;
 let plushies = [];
