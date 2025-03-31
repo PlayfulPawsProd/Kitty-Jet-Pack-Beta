@@ -3,7 +3,7 @@
 // PART 1 of 2 - Smoother Background Transitions! Nya!
 
 // --- Version ---
-const gameVersion = "v1.14q"; // This MUST match the version you intend to run
+const gameVersion = "v1.15"; // This MUST match the version you intend to run
 
 let kitty;
 let plushies = [];
