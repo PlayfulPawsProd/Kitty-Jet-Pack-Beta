@@ -1,5 +1,5 @@
 // ~~~ wardrobe.js ~~~ //
-// Mika's Super Cute Wardrobe! Adding Safety Nets! Nya~! ♡
+// Mika's Super Cute Wardrobe! DEBUGGING - Item Drawing Disabled! Nya~! ♡
 
 // --- Wardrobe State ---
 let currentShelf = 'colors'; let scrollIndexColors = 0; let scrollIndexPlushies = 0; let scrollIndexUpgrades = 0;
@@ -15,49 +15,67 @@ const WARDROBE_MIKA_COMMENTARY_DURATION = 240;
 // --- Data --- (Populated dynamically)
 
 // --- Calculate dynamic Wardrobe layout elements ---
-function setupWardrobeLayout(canvasW, canvasH) { /* ... (No changes needed) ... */ console.log("Calculating Wardrobe layout..."); try { wardrobeBackButton = { x: 15, y: canvasH - 65, w: 100, h: 40 }; wardrobeTitleY = canvasH * 0.07; shelvesY = canvasH * 0.15; let tabWidth = canvasW / 3.5; let tabSpacing = 10; let tabHeight = 40; let totalTabWidth = (tabWidth * 3) + (tabSpacing * 2); let tabsStartX = canvasW / 2 - totalTabWidth / 2; shelfTabs.colors = { x: tabsStartX, y: shelvesY, w: tabWidth, h: tabHeight, label: "Kitty Colors" }; shelfTabs.plushies = { x: tabsStartX + tabWidth + tabSpacing, y: shelvesY, w: tabWidth, h: tabHeight, label: "Plushies (Soon!)" }; shelfTabs.upgrades = { x: tabsStartX + (tabWidth + tabSpacing) * 2, y: shelvesY, w: tabWidth, h: tabHeight, label: "Upgrades (Soon!)" }; itemDisplayArea = { x: canvasW * 0.1, y: shelvesY + tabHeight + 20, w: canvasW * 0.8, h: canvasH * 0.5 }; let arrowSize = 40; leftArrowButton = { x: itemDisplayArea.x - arrowSize - 15, y: itemDisplayArea.y + itemDisplayArea.h / 2 - arrowSize / 2, w: arrowSize, h: arrowSize }; rightArrowButton = { x: itemDisplayArea.x + itemDisplayArea.w + 15, y: itemDisplayArea.y + itemDisplayArea.h / 2 - arrowSize / 2, w: arrowSize, h: arrowSize }; console.log("Wardrobe layout calculated!"); } catch (e) { console.error("Error in setupWardrobeLayout:", e); wardrobeBackButton = {x:0,y:0,w:1,h:1}; shelfTabs = {}; itemDisplayArea={x:0,y:0,w:1,h:1}; leftArrowButton={x:0,y:0,w:1,h:1}; rightArrowButton={x:0,y:0,w:1,h:1}; } }
+function setupWardrobeLayout(canvasW, canvasH) { console.log("Calculating Wardrobe layout..."); try { wardrobeBackButton = { x: 15, y: canvasH - 65, w: 100, h: 40 }; wardrobeTitleY = canvasH * 0.07; shelvesY = canvasH * 0.15; let tabWidth = canvasW / 3.5; let tabSpacing = 10; let tabHeight = 40; let totalTabWidth = (tabWidth * 3) + (tabSpacing * 2); let tabsStartX = canvasW / 2 - totalTabWidth / 2; shelfTabs.colors = { x: tabsStartX, y: shelvesY, w: tabWidth, h: tabHeight, label: "Kitty Colors" }; shelfTabs.plushies = { x: tabsStartX + tabWidth + tabSpacing, y: shelvesY, w: tabWidth, h: tabHeight, label: "Plushies (Soon!)" }; shelfTabs.upgrades = { x: tabsStartX + (tabWidth + tabSpacing) * 2, y: shelvesY, w: tabWidth, h: tabHeight, label: "Upgrades (Soon!)" }; itemDisplayArea = { x: canvasW * 0.1, y: shelvesY + tabHeight + 20, w: canvasW * 0.8, h: canvasH * 0.5 }; let arrowSize = 40; leftArrowButton = { x: itemDisplayArea.x - arrowSize - 15, y: itemDisplayArea.y + itemDisplayArea.h / 2 - arrowSize / 2, w: arrowSize, h: arrowSize }; rightArrowButton = { x: itemDisplayArea.x + itemDisplayArea.w + 15, y: itemDisplayArea.y + itemDisplayArea.h / 2 - arrowSize / 2, w: arrowSize, h: arrowSize }; console.log("Wardrobe layout calculated!"); } catch (e) { console.error("Error in setupWardrobeLayout:", e); wardrobeBackButton = {x:0,y:0,w:1,h:1}; shelfTabs = {}; itemDisplayArea={x:0,y:0,w:1,h:1}; leftArrowButton={x:0,y:0,w:1,h:1}; rightArrowButton={x:0,y:0,w:1,h:1}; } }
 
-// --- Display Wardrobe Screen ---
+
+// --- Display Wardrobe Screen (MORE ROBUST CHECKS!) ---
 function displayWardrobe() {
-    // ** More Robust Dependency Check **
-    if (!width || !height || !itemDisplayArea || !wardrobeBackButton || typeof color !== 'function' || typeof storeItems === 'undefined' || typeof isItemOwned !== 'function' || typeof getEquippedItem !== 'function' || typeof getColorValueById !== 'function' || typeof drawStaticKitty !== 'function') {
-         console.error("Wardrobe display dependencies missing! Check load order/setup.");
-         background(0); fill(255,0,0); textSize(20); textAlign(CENTER,CENTER); text("Wardrobe Error! Check console.", width/2, height/2);
-         return;
-     }
+    const dependencies = [ { name: 'width', type: 'variable' }, { name: 'height', type: 'variable' }, { name: 'itemDisplayArea', type: 'variable' }, { name: 'wardrobeBackButton', type: 'variable' }, { name: 'shelfTabs', type: 'variable' }, { name: 'leftArrowButton', type: 'variable' }, { name: 'rightArrowButton', type: 'variable' }, { name: 'wardrobeTitleY', type: 'variable' }, { name: 'color', type: 'function' }, { name: 'background', type: 'function'}, { name: 'fill', type: 'function' }, { name: 'stroke', type: 'function' }, { name: 'rectMode', type: 'function'}, { name: 'rect', type: 'function' }, { name: 'textSize', type: 'function'}, { name: 'textAlign', type: 'function'}, { name: 'text', type: 'function' }, { name: 'noStroke', type: 'function'}, { name: 'strokeWeight', type: 'function'}, { name: 'min', type: 'function' }, { name: 'constrain', type: 'function' }, { name: 'triangle', type: 'function' }, { name: 'storeItems', type: 'variable' }, { name: 'textColor', type: 'variable' }, { name: 'textStrokeColor', type: 'variable' }, { name: 'backButtonColor', type: 'variable' }, { name: 'heartColor', type: 'variable' }, { name: 'kittyColor', type: 'variable'}, { name: 'isItemOwned', type: 'function' }, { name: 'getEquippedItem', type: 'function' }, { name: 'getColorValueById', type: 'function' }, { name: 'drawStaticKitty', type: 'function' } ];
+    let missingDep = null;
+    for (const dep of dependencies) { let value; try { value = eval(dep.name); } catch (e) { missingDep = dep.name + " (ReferenceError)"; break; } if (dep.type === 'function' && typeof value !== 'function') { missingDep = dep.name + " (not function)"; break; } else if (dep.type === 'variable' && (typeof value === 'undefined' || value === null)) { if (dep.name === 'shelfTabs' && (typeof value !== 'object' || Object.keys(value).length === 0)) { missingDep = dep.name + " (invalid obj)"; break; } else if (dep.name !== 'shelfTabs'){ missingDep = dep.name + " (undefined)"; break; } } }
+    if (missingDep) { console.error(`Wardrobe display dependency missing: ${missingDep}!`); try { background(0); fill(255, 0, 0); textSize(20); textAlign(CENTER, CENTER); noStroke(); text(`Wardrobe Error!\nMissing: ${missingDep}\nCheck console.`, width / 2 || 200, height / 2 || 200); } catch(e) { /* Fail silently */ } return; }
+
+    // --- Normal Drawing ---
     try {
         fill(60, 50, 70, 230); rectMode(CORNER); rect(0, 0, width, height);
         fill(textColor); stroke(textStrokeColor); strokeWeight(3); textSize(min(width, height) * 0.07); textAlign(CENTER, CENTER); text("Mika's Wardrobe~♡", width / 2, wardrobeTitleY);
-
         textSize(min(width, height) * 0.03); strokeWeight(1.5);
         for (const key in shelfTabs) { let tab = shelfTabs[key]; if (!tab || typeof tab.x === 'undefined') continue; if (currentShelf === key) { fill(180, 150, 200); stroke(textColor); } else { fill(100, 80, 120); stroke(180); } rect(tab.x, tab.y, tab.w, tab.h, 5, 5, 0, 0); fill(currentShelf === key ? textColor : 200); noStroke(); textAlign(CENTER, CENTER); text(tab.label, tab.x + tab.w / 2, tab.y + tab.h / 2); }
-
         noStroke(); fill(40, 30, 50, 180); rect(itemDisplayArea.x, itemDisplayArea.y, itemDisplayArea.w, itemDisplayArea.h, 5);
-        drawShelfItems(); drawWardrobeArrows(); drawWardrobeBackButton(); drawWardrobeMika();
+        drawShelfItems(); // <--- This is the simplified version now
+        drawWardrobeArrows(); drawWardrobeBackButton(); drawWardrobeMika();
         textAlign(CENTER, CENTER); noStroke();
-
     } catch (e) { console.error("Error during displayWardrobe drawing:", e); fill(255,0,0); textSize(18); textAlign(CENTER,CENTER); text(`Wardrobe Draw Error! ${e.message}`, width/2, height/2 + 30); }
 }
 
 // --- Helper to Set Mika's Commentary ---
 function setWardrobeMikaCommentary(text) { wardrobeMikaCommentary = text; wardrobeMikaCommentaryTimer = WARDROBE_MIKA_COMMENTARY_DURATION; }
 
-// --- Helper to Draw Shelf Items ---
+// --- Helper to Draw Shelf Items (TEMPORARILY SIMPLIFIED FOR DEBUGGING!) ---
 function drawShelfItems() {
-    if (!itemDisplayArea || typeof isItemOwned !== 'function' || typeof getEquippedItem !== 'function' || typeof getColorValueById !== 'function' || !storeItems || !textColor || !heartColor) { console.error("Deps missing for drawShelfItems!"); textSize(min(width, height)*0.04); fill(255,0,0); textAlign(CENTER, CENTER); text("Item Drawing Error!", itemDisplayArea.x + itemDisplayArea.w/2, itemDisplayArea.y + itemDisplayArea.h/2); return; }
+    // ** Essential Safety Check **
+    if (!itemDisplayArea) { console.error("Item Display Area missing!"); return;}
+
+    /* // --- TEMPORARILY COMMENTED OUT START ---
+    // Safety checks for dependencies
+    if (typeof isItemOwned !== 'function' || typeof getEquippedItem !== 'function' || typeof getColorValueById !== 'function' || !storeItems || !textColor || !heartColor) {
+        console.error("Dependencies missing for drawShelfItems!");
+        textSize(min(width, height)*0.04); fill(255,0,0); textAlign(CENTER, CENTER);
+        text("Item Drawing Error!", itemDisplayArea.x + itemDisplayArea.w/2, itemDisplayArea.y + itemDisplayArea.h/2);
+        return;
+    }
     try {
         let itemsToShow = []; let scrollIndex = 0; let itemType = '';
         if (currentShelf === 'colors') {
-             // Ensure storeItems is array before filtering
-             if (!Array.isArray(storeItems)) throw new Error("storeItems is not an array!");
-             let ownedColorItems = storeItems.filter(item => item && item.type === 'kitty_color' && isItemOwned(item.id)); // Added check for item itself
+             if (!Array.isArray(storeItems)) throw new Error("storeItems not array!");
+             let ownedColorItems = storeItems.filter(item => item && item.type === 'kitty_color' && isItemOwned(item.id));
              let defaultItemData = storeItems.find(item => item && item.id === 'default');
              if (defaultItemData && !ownedColorItems.some(item => item && item.id === 'default')) { ownedColorItems.unshift(defaultItemData); }
              itemsToShow = ownedColorItems; scrollIndex = scrollIndexColors; itemType = 'kitty_color';
-        } else if (currentShelf === 'plushies') { textSize(min(width, height)*0.04); fill(150); textAlign(CENTER, CENTER); text("Plushie shelf soon!", itemDisplayArea.x + itemDisplayArea.w/2, itemDisplayArea.y + itemDisplayArea.h/2); return; }
-        else if (currentShelf === 'upgrades') { textSize(min(width, height)*0.04); fill(150); textAlign(CENTER, CENTER); text("Upgrade shelf soon!", itemDisplayArea.x + itemDisplayArea.w/2, itemDisplayArea.y + itemDisplayArea.h/2); return; }
+        } else if (currentShelf === 'plushies') {
+             textSize(min(width, height)*0.04); fill(150); textAlign(CENTER, CENTER);
+             text("Plushie shelf soon!", itemDisplayArea.x + itemDisplayArea.w/2, itemDisplayArea.y + itemDisplayArea.h/2); return;
+         } else if (currentShelf === 'upgrades') {
+             textSize(min(width, height)*0.04); fill(150); textAlign(CENTER, CENTER);
+             text("Upgrade shelf soon!", itemDisplayArea.x + itemDisplayArea.w/2, itemDisplayArea.y + itemDisplayArea.h/2); return;
+         }
 
-        if (!itemsToShow || itemsToShow.length === 0) { textSize(min(width, height)*0.04); fill(150); textAlign(CENTER, CENTER); text("Nothing here yet!", itemDisplayArea.x + itemDisplayArea.w/2, itemDisplayArea.y + itemDisplayArea.h/2); return; }
+        if (!Array.isArray(itemsToShow)) { console.warn("itemsToShow invalid!"); itemsToShow = [];}
+        if (itemsToShow.length === 0) {
+            textSize(min(width, height)*0.04); fill(150); textAlign(CENTER, CENTER);
+            text("Nothing here yet!", itemDisplayArea.x + itemDisplayArea.w/2, itemDisplayArea.y + itemDisplayArea.h/2);
+            return;
+        }
 
         let displayStartX = itemDisplayArea.x + 20; let displayStartY = itemDisplayArea.y + 20; let itemSize = min(itemDisplayArea.w / (ITEMS_PER_PAGE + 1.5), itemDisplayArea.h * 0.5); let itemSpacing = (itemDisplayArea.w - 40) / ITEMS_PER_PAGE; let nameYOffset = 20;
         let equippedItemId = getEquippedItem(itemType); if (itemType === 'kitty_color' && equippedItemId === null) { equippedItemId = 'default'; }
@@ -68,17 +86,28 @@ function drawShelfItems() {
 
             if (item.type === 'kitty_color') { let c = getColorValueById(item.id); if (c) { fill(c); stroke(50); strokeWeight(2); rect(itemDrawX, itemDrawY, itemSize, itemSize, 5); } else { fill(128); stroke(50); strokeWeight(2); rect(itemDrawX, itemDrawY, itemSize, itemSize, 5); fill(255,0,0); text("!", itemDrawX + itemSize/2, itemDrawY + itemSize/2); } }
             else { fill(100); stroke(50); strokeWeight(2); rect(itemDrawX, itemDrawY, itemSize, itemSize, 5); fill(200); noStroke(); textSize(itemSize * 0.5); textAlign(CENTER, CENTER); text("?", itemDrawX + itemSize/2, itemDrawY + itemSize/2); }
-
             fill(textColor); noStroke(); textSize(min(width, height) * 0.022); textAlign(CENTER, TOP); text(item.name, itemSlotCenterX, itemDrawY + itemSize + nameYOffset);
             if (equippedItemId === item.id) { fill(heartColor); textSize(itemSize * 0.3); textAlign(CENTER, CENTER); text("♥", itemSlotCenterX, itemDrawY - 10); }
         }
         textAlign(CENTER, CENTER);
 
-    } catch (e) { console.error("Error during drawShelfItems:", e); fill(255,0,0); textSize(16); textAlign(CENTER,CENTER); text(`Item Draw Error! ${e.message}`, itemDisplayArea.x + itemDisplayArea.w/2, itemDisplayArea.y + itemDisplayArea.h/2 + 20); }
+    } catch (e) {
+        console.error("Error during drawShelfItems:", e);
+        fill(255,0,0); textSize(16); textAlign(CENTER,CENTER);
+        text(`Item Draw Error! ${e.message}`, itemDisplayArea.x + itemDisplayArea.w/2, itemDisplayArea.y + itemDisplayArea.h/2 + 20);
+    }
+    */ // --- TEMPORARILY COMMENTED OUT END ---
+
+    // --- ALWAYS DRAW THIS FOR NOW ---
+    textSize(min(width, height)*0.04); fill(150); textAlign(CENTER, CENTER);
+    text("(Item display temporarily disabled)", itemDisplayArea.x + itemDisplayArea.w/2, itemDisplayArea.y + itemDisplayArea.h/2);
+    // --- END ALWAYS DRAW ---
+
 }
 
+
 // --- Helper to Draw Arrows ---
-function drawWardrobeArrows() { /* ... (logic same, added item filtering again for count) ... */ if (!leftArrowButton || !rightArrowButton || typeof isItemOwned !== 'function') { console.error("Arrow buttons/isItemOwned missing!"); return; } try { let items = []; let index = 0; if (currentShelf === 'colors') { if(typeof storeItems !== 'undefined') { items = storeItems.filter(item => item && item.type === 'kitty_color' && isItemOwned(item.id)); let di=storeItems.find(i=>i&&i.id==='default'); if (di && !items.some(item => item && item.id === 'default')){ items.unshift(di); }} index = scrollIndexColors; } let canScrollRight = (items && (index + ITEMS_PER_PAGE < items.length)); fill(150, 150, 180, (index > 0) ? 220 : 80); noStroke(); triangle(leftArrowButton.x + leftArrowButton.w, leftArrowButton.y, leftArrowButton.x + leftArrowButton.w, leftArrowButton.y + leftArrowButton.h, leftArrowButton.x, leftArrowButton.y + leftArrowButton.h / 2); fill(150, 150, 180, canScrollRight ? 220 : 80); noStroke(); triangle(rightArrowButton.x, rightArrowButton.y, rightArrowButton.x, rightArrowButton.y + rightArrowButton.h, rightArrowButton.x + rightArrowButton.w, rightArrowButton.y + rightArrowButton.h / 2); } catch (e) { console.error("Error drawing wardrobe arrows:", e); } }
+function drawWardrobeArrows() { /* ... (Same logic, should be okay now) ... */ if (!leftArrowButton || !rightArrowButton || typeof isItemOwned !== 'function' || typeof storeItems === 'undefined') { console.error("Arrow draw deps missing!"); return; } try { let items = []; let index = 0; if (currentShelf === 'colors') { if(Array.isArray(storeItems)) { items = storeItems.filter(item => item && item.type === 'kitty_color' && isItemOwned(item.id)); let di=storeItems.find(i=>i&&i.id==='default'); if (di && !items.some(item => item && item.id === 'default')){ items.unshift(di); }} index = scrollIndexColors; } if (!Array.isArray(items)) items = []; let canScrollRight = (items.length > 0 && (index + ITEMS_PER_PAGE < items.length)); fill(150, 150, 180, (index > 0) ? 220 : 80); noStroke(); triangle(leftArrowButton.x + leftArrowButton.w, leftArrowButton.y, leftArrowButton.x + leftArrowButton.w, leftArrowButton.y + leftArrowButton.h, leftArrowButton.x, leftArrowButton.y + leftArrowButton.h / 2); fill(150, 150, 180, canScrollRight ? 220 : 80); noStroke(); triangle(rightArrowButton.x, rightArrowButton.y, rightArrowButton.x, rightArrowButton.y + rightArrowButton.h, rightArrowButton.x + rightArrowButton.w, rightArrowButton.y + rightArrowButton.h / 2); } catch (e) { console.error("Error drawing wardrobe arrows:", e); } }
 
 // --- Helper to Draw Back Button ---
 function drawWardrobeBackButton() { /* ... (no changes) ... */ if (!wardrobeBackButton || !backButtonColor || !textColor || !textStrokeColor) { console.error("Back button drawing deps missing!"); return; } try { fill(backButtonColor); rectMode(CORNER); noStroke(); rect(wardrobeBackButton.x, wardrobeBackButton.y, wardrobeBackButton.w, wardrobeBackButton.h, 5); fill(textColor); textSize(min(width, height) * 0.04); textAlign(CENTER, CENTER); stroke(textStrokeColor); strokeWeight(1.5); text("Back", wardrobeBackButton.x + wardrobeBackButton.w / 2, wardrobeBackButton.y + wardrobeBackButton.h / 2); noStroke(); } catch (e) { console.error("Error drawing wardrobe back button:", e); } }
@@ -89,30 +118,27 @@ function drawWardrobeMika() { /* ... (no changes) ... */ if (!width || !height |
 
 // --- Handle Wardrobe Input ---
 function handleWardrobeInput(px, py) {
-    // ** Robust Check for Dependencies **
-    if (!wardrobeBackButton || !shelfTabs || !leftArrowButton || !rightArrowButton || !itemDisplayArea || typeof isItemOwned !== 'function' || typeof equipItem !== 'function' || typeof getEquippedItem !== 'function' || typeof storeItems === 'undefined' || typeof gameState === 'undefined' || typeof shakeTime === 'undefined' || typeof kittyColor === 'undefined') {
-        console.error("Wardrobe Input dependencies missing!");
-        // Maybe set an error commentary?
-        if(typeof setWardrobeMikaCommentary === 'function') setWardrobeMikaCommentary("Nya! Input system error!");
-        return false;
-    }
-    try {
+    const neededFuncs = [isItemOwned, getEquippedItem, equipItem, setWardrobeMikaCommentary]; const neededVars = [wardrobeBackButton, shelfTabs, leftArrowButton, rightArrowButton, itemDisplayArea, storeItems, gameState, shakeTime, kittyColor, currentShelf, scrollIndexColors];
+    for(const func of neededFuncs) { if (typeof func !== 'function') { console.error(`Wardrobe Input missing func: ${func.name}!`); return false; }}
+    for(const v of neededVars) { if (typeof v === 'undefined') { console.error(`Wardrobe Input missing var!`); return false; }}
+
+    try { // Wrap input handling
         // 1. Back Button
         if (px >= wardrobeBackButton.x && px <= wardrobeBackButton.x + wardrobeBackButton.w && py >= wardrobeBackButton.y && py <= wardrobeBackButton.y + wardrobeBackButton.h) { console.log("Wardrobe Back!"); gameState = 'start'; return true; }
 
         // 2. Shelf Tabs
         for (const key in shelfTabs) { let tab = shelfTabs[key]; if (!tab) continue; if (px >= tab.x && px <= tab.x + tab.w && py >= tab.y && py <= tab.y + tab.h) { if (currentShelf !== key) { if (key === 'colors') { console.log("Switch shelf: colors"); currentShelf = key; setWardrobeMikaCommentary("Ooh, colors! Which one makes me look cutest for Master?"); } else { console.log("Shelf WIP:", key); shakeTime = 8; setWardrobeMikaCommentary("Hmph! Master hasn't unlocked this shelf for me yet!"); } } return true; } }
 
-        // 3. Arrow Buttons
+        // 3. Arrow Buttons (Check items list before using length)
         let items = []; let indexRef = { index: 0 };
-        if (currentShelf === 'colors') { items = storeItems.filter(item => item && item.type === 'kitty_color' && isItemOwned(item.id)); let di=storeItems.find(i=>i&&i.id==='default'); if (di && !items.some(item => item && item.id === 'default')){ items.unshift(di); } indexRef.index = scrollIndexColors; }
-        // Left Arrow
-        if (indexRef.index > 0 && px >= leftArrowButton.x && px <= leftArrowButton.x + leftArrowButton.w && py >= leftArrowButton.y && py <= leftArrowButton.y + leftArrowButton.h) { console.log("Scroll left:", currentShelf); indexRef.index = max(0, indexRef.index - ITEMS_PER_PAGE); if (currentShelf === 'colors') { scrollIndexColors = indexRef.index; } setWardrobeMikaCommentary("Let's see the others again!"); return true; }
-        // Right Arrow
-        if ((items && indexRef.index + ITEMS_PER_PAGE < items.length) && px >= rightArrowButton.x && px <= rightArrowButton.x + rightArrowButton.w && py >= rightArrowButton.y && py <= rightArrowButton.y + rightArrowButton.h) { console.log("Scroll right:", currentShelf); indexRef.index += ITEMS_PER_PAGE; if (currentShelf === 'colors') { scrollIndexColors = indexRef.index; } setWardrobeMikaCommentary("What else have you got for me, Master?!"); return true; }
+        if (currentShelf === 'colors') { if(Array.isArray(storeItems)) { items = storeItems.filter(item => item && item.type === 'kitty_color' && isItemOwned(item.id)); let di=storeItems.find(i=>i&&i.id==='default'); if (di && !items.some(item => item && item.id === 'default')){ items.unshift(di); }} indexRef.index = scrollIndexColors; }
+        if (!Array.isArray(items)) items = []; // Safety
 
-        // 4. Item Clicks
-        if (typeof items === 'undefined' || items.length === 0) { return false; }
+        if (indexRef.index > 0 && px >= leftArrowButton.x && px <= leftArrowButton.x + leftArrowButton.w && py >= leftArrowButton.y && py <= leftArrowButton.y + leftArrowButton.h) { console.log("Scroll left:", currentShelf); indexRef.index = max(0, indexRef.index - ITEMS_PER_PAGE); if (currentShelf === 'colors') { scrollIndexColors = indexRef.index; } setWardrobeMikaCommentary("Let's see the others again!"); return true; }
+        if ((items.length > 0 && indexRef.index + ITEMS_PER_PAGE < items.length) && px >= rightArrowButton.x && px <= rightArrowButton.x + rightArrowButton.w && py >= rightArrowButton.y && py <= rightArrowButton.y + rightArrowButton.h) { console.log("Scroll right:", currentShelf); indexRef.index += ITEMS_PER_PAGE; if (currentShelf === 'colors') { scrollIndexColors = indexRef.index; } setWardrobeMikaCommentary("What else have you got for me, Master?!"); return true; }
+
+        // 4. Item Clicks (Check items list before looping)
+        if (items.length === 0) { return false; } // No items to click if list is empty
         let displayStartX = itemDisplayArea.x + 20; let displayStartY = itemDisplayArea.y + 20; let itemSize = min(itemDisplayArea.w / (ITEMS_PER_PAGE + 1.5), itemDisplayArea.h * 0.5); let itemSpacing = (itemDisplayArea.w - 40) / ITEMS_PER_PAGE;
         for (let i = 0; i < ITEMS_PER_PAGE; i++) { let itemIndex = indexRef.index + i; if (itemIndex >= items.length) break; let item = items[itemIndex]; if (!item) continue; let itemSlotCenterX = displayStartX + i * itemSpacing + (itemSpacing / 2); let itemDrawX = itemSlotCenterX - (itemSize / 2); let itemDrawY = displayStartY + itemDisplayArea.h*0.15;
             if (px >= itemDrawX && px <= itemDrawX + itemSize && py >= itemDrawY && py <= itemDrawY + itemSize + 40) {
@@ -122,14 +148,14 @@ function handleWardrobeInput(px, py) {
                     if ((currentEquipped === item.id) || (item.id === 'default' && currentEquipped === null)) { console.log("Unequip color."); equipItem('kitty_color', null); setWardrobeMikaCommentary("Default pink is cute too... I guess. Hmph!"); }
                     else { console.log("Equip color:", item.name); equipItem('kitty_color', item.id); setWardrobeMikaCommentary(`Yes! ${item.name} looks *purrfect* on me! Right, Master~? ♡`); }
                 } else { console.log("Cannot equip:", item.type); shakeTime = 8; setWardrobeMikaCommentary("That's... not really my style, Master."); }
-                return true;
+                return true; // Click handled
             }
         }
     } catch (e) { console.error("Error during handleWardrobeInput:", e); setWardrobeMikaCommentary("Ouch! Broke something!"); return false; }
     return false; // Click wasn't handled
 }
 
-// --- Need functions from store.js & items.js ---
-// isItemOwned(itemId), getEquippedItem(itemType), equipItem(itemType, itemId), getColorValueById(id)
-// Needs access to `storeItems` array from items.js
-// Needs access to sketch.js globals & p5 functions.
+// --- Dependencies ---
+// isItemOwned, getEquippedItem, equipItem, getColorValueById from store.js
+// storeItems from items.js
+// sketch.js globals & p5 functions
